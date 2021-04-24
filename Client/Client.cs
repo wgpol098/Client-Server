@@ -191,6 +191,38 @@ namespace Client
             Console.WriteLine("Czas wykonywania komendy: " + watch.ElapsedMilliseconds);
         }
 
+        //Na razie zrobię odbieranie plików
+        static void SendTCPFTP(NetworkStream stream, string command)
+        {
+            if (command.Split()[1].Equals("send"))
+            {
+                command += " " + FTP.FileToString(command.Split()[2]);
+                Console.WriteLine(command.Split()[3].Length);
+            }
+
+            byte[] data = Encoding.ASCII.GetBytes(command);
+
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            stream.Write(data, 0, data.Length);
+            //Console.Write("Wysłane: {0}", message);
+
+            byte[] response = new byte[256];
+            string responseStr = string.Empty;
+            //czytanie dopóki response Str nie będzie miało większego 
+            int bytes;
+            do
+            {
+                bytes = stream.Read(response, 0, response.Length);
+                responseStr += Encoding.ASCII.GetString(response, 0, bytes);
+            }
+            while (stream.DataAvailable) /*responseStr.Length < int.Parse(tmp[2])*/;
+            watch.Stop();
+
+            if (command.Split()[1].Equals("get")) FTP.StringToFile(responseStr, command.Split()[2]);
+            else Console.WriteLine(responseStr);
+            Console.WriteLine("Czas wykonywania komendy: " + watch.ElapsedMilliseconds);
+        }
+
         static void StartTCP()
         {
             try
@@ -212,6 +244,17 @@ namespace Client
                     string[] tmp = command.Split();
                     switch (tmp[0])
                     {
+                        case "ftp":
+                            try
+                            {
+                                SendTCPFTP(stream, command);
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.Message);
+                                exitFlag = true;
+                            }
+                            break;
                         case "ping":
                             try
                             {

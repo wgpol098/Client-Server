@@ -30,27 +30,48 @@ namespace Server.Services
                 {
                     case "send": if (SaveFile(command)) return "File saved successfully!";
                         return "File isn't saved";
+                    case "get": return GetFile(command);
+                    case "list": return FileList(command);
                     default: return "Command is incorrect!\n";
                 }
             }
             return "Command is incorrect!\n";
         }
 
+        private string FileList(string command)
+        {
+            string[] fileList = Directory.GetFiles(_folderPath);
+            return "FileList:\n" + string.Join("\n", fileList) + "\n";
+        }
+
+        private string GetFile(string command)
+        {
+            string[] stringArray = command.Split();
+            
+            if(stringArray.Length > 2)
+            {
+                string filename = stringArray[2];
+                string file = Common.FTP.FileToString(_folderPath + "\\" + filename);
+                if(file == null) return "File not exists\n";
+                return file;
+            }
+            return "ERROR!\n";
+        }
+
+
+        //To jest do przebudowania, jak klient będzie mógł wysyłać pliki
+
         private bool SaveFile(string command)
         {
-            if (command.Split().Length > 3)
+            string[] stringArray = command.Split();
+            if (stringArray.Length > 3)
             {
-                string[] stringArray = command.Split();
-
                 string filename = stringArray[2];
-                //Sprwadzanie czy taki plik istnieje 
-                //Jeśli jest odpowiednia opcja w komendzie to nadpisujemy plik
-                //Na razie będę nadpisyuwał plik pomimo wszystko -- dobre rozwiązanie do testów
 
-                using (BinaryWriter writer = new BinaryWriter(File.Open(filename, FileMode.Create)))
-                {
-                    writer.Write(command);
-                }
+                string file = stringArray[3];
+
+                Console.WriteLine(file.Length);
+                Common.FTP.StringToFile(file, filename);
 
                 return true;
             }
