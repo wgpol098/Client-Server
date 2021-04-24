@@ -15,6 +15,7 @@ namespace Server
 
     interface ICommunicator
     {
+        bool Running { get; }
         void Start(CommandD onCommand, CommunicatorD onDisconnect);
         void Stop();
     }

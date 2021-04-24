@@ -1,126 +1,121 @@
-﻿using Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Server
 {
     class TCPListener : IListener
     {
-        TcpListener server;
-        List<TcpClient> tcpClients = new List<TcpClient>();
+        TcpListener _listener;
+        CommunicatorD _onConnect;
+
+        IPEndPoint _ipEndPoint;
+
+        public TCPListener(IPEndPoint iPEndPoint)
+        {
+            _ipEndPoint = iPEndPoint;
+        }
+        private void HandleAcceptTcpClient(IAsyncResult result)
+        {
+            TcpClient tcp = _listener.EndAcceptTcpClient(result);
+            _listener.BeginAcceptTcpClient(HandleAcceptTcpClient, _listener);
+            ICommunicator tmp = new TCPCommunicator(tcp);
+            _onConnect(tmp); 
+            Console.WriteLine("[TCP] Connected with: " + tcp.Client.RemoteEndPoint);
+        }
+
         public void Start(CommunicatorD onConnect)
         {
-            server = new TcpListener(IPAddress.Any, 12345);
-            server.Start();
-            byte[] bytes = new byte[256];
-
-            //nasłuchuj cały czas
-            //Tutaj powinno się wyświetlać to co nasłuchuje
-            //To chyba będzie dobrze działać dla kilku klientów -- ale trzeba przetestować
-            while(true)
-            {
-                //to już na tym poziomie powinno być tworzenie odpowadacza
-                TcpClient client = server.AcceptTcpClient();
-
-
-                //tmp.Start(command, onConnect);
-
-                //Pytanie co się stanie jak będzie więcej klientów.
-                //Czytanie odbieranych danych
-                NetworkStream stream = client.GetStream();
-                string data = null;
-                int len, nl;
-                while ((len = stream.Read(bytes, 0, bytes.Length)) > 0)
-                {
-                    data += Encoding.ASCII.GetString(bytes, 0, len);
-
-                    Console.WriteLine(data);
-                    //Jeśli przyszły jakieś dane to tworzę odpowiadacza, który odpowiada
-
-                    ICommunicator tmp = new CommunicatorTCP(client);
-
-                    //  ICommunicator tmp = new CommunicatorTCP(client.Client.Add);
-                    CommandD command = new CommandD(Ping.Pong);
-                    tmp.Start(command, onConnect);
-
-
-                    //  ICommunicator tmp = new CommunicatorTCP();
-                    //  CommandD command = new CommandD(Ping.Pong);
-
-                    //  tmp.Start(command, onConnect);
-                    // onConnect(tmp);
-                    data = null;
-                }
-            }
-            
-
-            /*            while (true)
-                        {
-                            TcpClient client = server.AcceptTcpClient();
-                            string data = null;
-                            int len, nl;
-                            NetworkStream stream = client.GetStream();
-                            while ((len = stream.Read(bytes, 0, bytes.Length)) > 0)
-                            {
-                                data += Encoding.ASCII.GetString(bytes, 0, len);
-
-                                Console.WriteLine(data);
-
-                              //  ICommunicator tmp = new CommunicatorTCP();
-                              //  CommandD command = new CommandD(Ping.Pong);
-
-                              //  tmp.Start(command, onConnect);
-                               // onConnect(tmp);
-                                data = null;
-                            }
-                        }*/
+            _onConnect = onConnect;
+            _listener = new TcpListener(_ipEndPoint);
+            _listener.Start();
+            _listener.BeginAcceptTcpClient(HandleAcceptTcpClient, _listener);
         }
 
-        public void Stop() => server.Stop();
+        public void Stop() => _listener.Stop();
     }
 
-    class CommunicatorTCP : ICommunicator
+    class TCPCommunicator : ICommunicator
     {
         TcpClient client;
-        public CommunicatorTCP(TcpClient tcpClient)
-        {
-            client = tcpClient;
-        }
-        //Na razie nie ważne w onCommand
-        //Pierwszy argument mówi jak odpowiadacz ma wygenerować argument
-        //Drugi mówi jak ma się odmeldowywać odpowiadacz. Kiedy odpowiadacz uzna, że koniec komunikacji, to odmelduje się przez ten delegat
-        //Wywoływana kiedy odpowiadacz zakończy swoje działanie.
+        public TCPCommunicator(TcpClient tcpClient) => client = tcpClient;
+
+        Task task;
+        private bool _running = false;
+        private bool _connected = false;
+        public bool Running { get { return _running; } }
+
+        CommandD _onCommand;
+        CommunicatorD _onDisconnect;
+
+        private int _time = 10000;
+
+        //Start powinien s
         public void Start(CommandD onCommand, CommunicatorD onDisconnect)
         {
-            NetworkStream stream = client.GetStream();
+            //Tutaj możliwe jest ustawianie timeoutu połączenia
+            client.ReceiveTimeout = _time;
+            client.SendTimeout = _time;
+            _onCommand = onCommand;
+            _onDisconnect = onDisconnect;
+            task = new Task(() => AnswerTask());
+            task.Start();
+            _running = true;
+            _connected = true;
+        }
+
+        //client Connecter pokazuje stan na poprzednią operację, trzeba pingować klienta, żeby okazało się czy wszystko jest dobrze
+        //Może trzeba zrobić jakiś service, który będzie odpowiedzialny za kończenie połączenia?
+        //Można zrobić jakiś ping co dwie sekundy podtrzymujący połączenie
+
+        //Klient musi dodawać jakiś znak końca linii i trzeba to czytać dopóki nie otrzymamy tego znaku
 
 
-                    string message = onCommand("pong 102 asd");
-                    byte[] dat1a = Encoding.ASCII.GetBytes(message);
+        //Ta metoda działa w tle
+        private void AnswerTask()
+        {
+            Console.WriteLine("[TCP] Communicator start");
+            NetworkStream networkStream = client.GetStream();
+            byte[] bytes = new byte[256];
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
 
-                    stream.Write(dat1a, 0, dat1a.Length);
-                    Console.Write("Wysłane: {0}", message);
+            //To musi być tutaj
+            string data = string.Empty;
+            while (client.Connected /*&& stopwatch.ElapsedMilliseconds <= _time*/)
+            {
 
-                    //  ICommunicator tmp = new CommunicatorTCP();
-                    //  CommandD command = new CommandD(Ping.Pong);
-
-                    //  tmp.Start(command, onConnect);
-                    // onConnect(tmp);
- 
-
-
-          //  stream.Close();
-          //  client.Close();
+                if (!data.Contains('3'.ToString()) && networkStream.DataAvailable && networkStream.CanRead)
+                {
+                    int len = networkStream.Read(bytes, 0, bytes.Length);
+                    data += Encoding.ASCII.GetString(bytes, 0, len);
+                }
+                else if (data != string.Empty)
+                {
+                    string message = _onCommand(data);
+                    bytes = Encoding.ASCII.GetBytes(message);
+                    networkStream.Write(bytes, 0, bytes.Length);
+                    Console.Write("[TCP] Wysłane: {0}", message);
+                    stopwatch.Restart();
+                    data = string.Empty;
+                }
+            }
+            networkStream.Close();
+            Stop();
         }
 
         public void Stop()
         {
-            throw new NotImplementedException();
+            _onDisconnect(this);
+            Console.WriteLine("[TCP] Communicator stopped");
+            client.Close();
+            _running = false;
+            _connected = false;
         }
     }
 }
