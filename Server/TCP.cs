@@ -47,7 +47,6 @@ namespace Server
 
         Task task;
         private bool _running = false;
-        private bool _connected = false;
         public bool Running { get { return _running; } }
 
         CommandD _onCommand;
@@ -66,7 +65,6 @@ namespace Server
             task = new Task(() => AnswerTask());
             task.Start();
             _running = true;
-            _connected = true;
         }
 
         //client Connecter pokazuje stan na poprzednią operację, trzeba pingować klienta, żeby okazało się czy wszystko jest dobrze
@@ -89,8 +87,7 @@ namespace Server
             string data = string.Empty;
             while (client.Connected /*&& stopwatch.ElapsedMilliseconds <= _time*/)
             {
-
-                if (!data.Contains('3'.ToString()) && networkStream.DataAvailable && networkStream.CanRead)
+                if (/*!data.Contains('3'.ToString()) && */ networkStream.DataAvailable)
                 {
                     int len = networkStream.Read(bytes, 0, bytes.Length);
                     data += Encoding.ASCII.GetString(bytes, 0, len);
@@ -115,7 +112,6 @@ namespace Server
             Console.WriteLine("[TCP] Communicator stopped");
             client.Close();
             _running = false;
-            _connected = false;
         }
     }
 }

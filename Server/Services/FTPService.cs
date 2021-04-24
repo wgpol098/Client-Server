@@ -66,7 +66,7 @@ namespace Server.Services
             string[] stringArray = command.Split();
             if (stringArray.Length > 3)
             {
-                string filename = stringArray[2];
+                string filename = _folderPath + "\\" + stringArray[2];
 
                 string file = stringArray[3];
 
