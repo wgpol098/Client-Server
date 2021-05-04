@@ -1,25 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Server
 {
     class TCPListener : IListener
     {
-        TcpListener _listener;
-        CommunicatorD _onConnect;
+        private TcpListener _listener;
+        private CommunicatorD _onConnect;
 
-        IPEndPoint _ipEndPoint;
+        private IPEndPoint _ipEndPoint;
 
-        public TCPListener(IPEndPoint iPEndPoint)
-        {
-            _ipEndPoint = iPEndPoint;
-        }
+        public TCPListener(IPEndPoint iPEndPoint) => _ipEndPoint = iPEndPoint;
         private void HandleAcceptTcpClient(IAsyncResult result)
         {
             TcpClient tcp = _listener.EndAcceptTcpClient(result);
@@ -42,15 +37,15 @@ namespace Server
 
     class TCPCommunicator : ICommunicator
     {
-        TcpClient client;
+        private TcpClient client;
         public TCPCommunicator(TcpClient tcpClient) => client = tcpClient;
 
         Task task;
         private bool _running = false;
         public bool Running { get { return _running; } }
 
-        CommandD _onCommand;
-        CommunicatorD _onDisconnect;
+        private CommandD _onCommand;
+        private CommunicatorD _onDisconnect;
 
         private int _time = 10000;
 

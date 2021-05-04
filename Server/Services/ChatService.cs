@@ -26,13 +26,21 @@ namespace Server.Services
                     case "send":
                         if(AddMessage(command)) return "Successfully send message!\n";
                         else return "Command is incorrect!\n";
-                    case "get":
-                        return GetMessage(command);
+                    case "get": return GetMessage(command);
+                    case "help": return Help();
                     default:
                         return "Command is incorrect!\n";
                 }
             }
             return "Command is incorrect!\n";
+        }
+
+        private string Help()
+        {
+            return
+                "This is chat help\n" +
+                "chat send -user -user - send message\n" +
+                "chat get -user - get user messages\n";
         }
 
         private string GetMessage(string command)

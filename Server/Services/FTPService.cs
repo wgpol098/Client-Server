@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.Services
 {
@@ -18,12 +14,6 @@ namespace Server.Services
 
         public string AnswerCommand(string command)
         {
-
-            //Sprwadzanie jakie dodano parametrt
-            //send
-            //get
-            //do tego nazwa pliku
-
             if(command.Split().Length > 1)
             {
                 switch (command.Split()[1])
@@ -32,10 +22,20 @@ namespace Server.Services
                         return "File isn't saved";
                     case "get": return GetFile(command);
                     case "list": return FileList(command);
+                    case "help": return Help();
                     default: return "Command is incorrect!\n";
                 }
             }
             return "Command is incorrect!\n";
+        }
+
+        private string Help()
+        {
+            return
+                "This is command ftp \n" +
+                "ftp send -filename - send file\n" +
+                "ftp get -filename - download file\n" +
+                "ftp list - show available files in server";
         }
 
         private string FileList(string command)
@@ -47,7 +47,6 @@ namespace Server.Services
         private string GetFile(string command)
         {
             string[] stringArray = command.Split();
-            
             if(stringArray.Length > 2)
             {
                 string filename = stringArray[2];
@@ -55,24 +54,15 @@ namespace Server.Services
                 if(file == null) return "File not exists\n";
                 return file;
             }
-            return "ERROR!\n";
+            return "File is not available!\n";
         }
-
-
-        //To jest do przebudowania, jak klient będzie mógł wysyłać pliki
 
         private bool SaveFile(string command)
         {
             string[] stringArray = command.Split();
             if (stringArray.Length > 3)
             {
-                string filename = _folderPath + "\\" + stringArray[2];
-
-                string file = stringArray[3];
-
-                Console.WriteLine(file.Length);
-                Common.FTP.StringToFile(file, filename);
-
+                Common.FTP.StringToFile(stringArray[3], _folderPath + "\\" + stringArray[2]);
                 return true;
             }
             return false;

@@ -1,10 +1,8 @@
-﻿using Common;
-using Server.Services;
+﻿using Server.Services;
 using System;
 using System.Collections.Generic;
+using System.IO.Ports;
 using System.Net;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -142,41 +140,15 @@ namespace Server
             srv.AddServiceModule("ping", new PingService());
             srv.AddServiceModule("chat", new ChatService());
             srv.AddServiceModule("ftp", new FTPService("FTP"));
+            srv.AddServiceModule("conf", new ConfigurationService());
             srv.Start();
             //dodaje i włącza nasłuchiwacza
             srv.AddListener(new TCPListener(new IPEndPoint(IPAddress.Any, 12345)));
             srv.AddListener(new UDPListener(new IPEndPoint(IPAddress.Any, 12346)));
-            //srv.AddListener(new RS232Listener());
+            srv.AddListener(new RS232Listener(new SerialPort("COM2", 9600, Parity.None, 8, StopBits.One)));
             //srv.AddListener(new FTPListener());
             srv.WaitForStop();
             srv.Stop();
-        }
-
-        static void Test0PingTCP()
-        {
-            TcpListener server = new TcpListener(IPAddress.Any, 12345);
-            server.Start();
-            byte[] bytes = new byte[256];
-            while (true)
-            {
-                TcpClient client = server.AcceptTcpClient();
-                string data = null;
-                int len, nl;
-                NetworkStream stream = client.GetStream();
-                while ((len = stream.Read(bytes, 0, bytes.Length)) > 0)
-                {
-                    data += Encoding.ASCII.GetString(bytes, 0, len);
-                    while ((nl = data.IndexOf('\n')) != -1)
-                    {
-                        string line = data.Substring(0, nl + 1);
-                        data = data.Substring(nl + 1);
-                        byte[] msg = Encoding.ASCII.GetBytes(Ping.Pong(line));
-                        stream.Write(msg, 0, msg.Length);
-                    }
-                }
-                client.Close();
-                server.Stop();
-            }
         }
     }
 }
