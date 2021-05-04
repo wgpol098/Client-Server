@@ -37,12 +37,10 @@ namespace Server
 
     class TCPCommunicator : ICommunicator
     {
-        private TcpClient client;
-        public TCPCommunicator(TcpClient tcpClient) => client = tcpClient;
+        private TcpClient _client;
+        public TCPCommunicator(TcpClient tcpClient) => _client = tcpClient;
 
         Task task;
-        private bool _running = false;
-        public bool Running { get { return _running; } }
 
         private CommandD _onCommand;
         private CommunicatorD _onDisconnect;
@@ -53,34 +51,30 @@ namespace Server
         public void Start(CommandD onCommand, CommunicatorD onDisconnect)
         {
             //Tutaj możliwe jest ustawianie timeoutu połączenia
-            client.ReceiveTimeout = _time;
-            client.SendTimeout = _time;
+            _client.ReceiveTimeout = _time;
+            _client.SendTimeout = _time;
             _onCommand = onCommand;
             _onDisconnect = onDisconnect;
             task = new Task(() => AnswerTask());
             task.Start();
-            _running = true;
         }
 
         //client Connecter pokazuje stan na poprzednią operację, trzeba pingować klienta, żeby okazało się czy wszystko jest dobrze
         //Może trzeba zrobić jakiś service, który będzie odpowiedzialny za kończenie połączenia?
         //Można zrobić jakiś ping co dwie sekundy podtrzymujący połączenie
 
-        //Klient musi dodawać jakiś znak końca linii i trzeba to czytać dopóki nie otrzymamy tego znaku
-
-
         //Ta metoda działa w tle
         private void AnswerTask()
         {
             Console.WriteLine("[TCP] Communicator start");
-            NetworkStream networkStream = client.GetStream();
+            NetworkStream networkStream = _client.GetStream();
             byte[] bytes = new byte[256];
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
             //To musi być tutaj
             string data = string.Empty;
-            while (client.Connected /*&& stopwatch.ElapsedMilliseconds <= _time*/)
+            while (_client.Connected && stopwatch.ElapsedMilliseconds <= _time)
             {
                 if (/*!data.Contains('3'.ToString()) && */ networkStream.DataAvailable)
                 {
@@ -104,9 +98,8 @@ namespace Server
         public void Stop()
         {
             _onDisconnect(this);
+            _client.Close();
             Console.WriteLine("[TCP] Communicator stopped");
-            client.Close();
-            _running = false;
         }
     }
 }

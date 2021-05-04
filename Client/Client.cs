@@ -94,6 +94,8 @@ namespace Client
                 Console.WriteLine("Podaj komende:");
                 command = Console.ReadLine();
                 sp.WriteLine(command);
+                command = sp.ReadLine();
+                Console.WriteLine(command);
             }
         }
 

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Server
+﻿namespace Server
 {
     delegate string CommandD(string command);
     delegate void CommunicatorD(ICommunicator commander);
@@ -15,7 +9,6 @@ namespace Server
 
     interface ICommunicator
     {
-        bool Running { get; }
         void Start(CommandD onCommand, CommunicatorD onDisconnect);
         void Stop();
     }

@@ -69,16 +69,9 @@ namespace Server
 
     class UDPCommunicator : ICommunicator
     {
-        private bool _running = false;
-
-        public bool Running => _running;
-
-        public Dictionary<string, IServiceModule> services { get; set; } = new Dictionary<string, IServiceModule>();
-
         private IPEndPoint _ipEndPoint;
         private string _receivedString = string.Empty;
         UdpClient _client;
-
 
         public UDPCommunicator(UdpClient client, IPEndPoint udpClient, string receivedString)
         {
@@ -90,7 +83,6 @@ namespace Server
         }
         public void Start(CommandD onCommand, CommunicatorD onDisconnect)
         {
-            _running = true;
             //_ipEndPoint.Port = 12346;
             //_client.Connect(_ipEndPoint);
             //Console.WriteLine(_ipEndPoint);

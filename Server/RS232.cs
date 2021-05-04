@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO.Ports;
-using System.Threading;
 
 namespace Server
 {
@@ -16,8 +15,10 @@ namespace Server
             _serialPort.Open();
             while(true)
             {
-                Console.WriteLine(_serialPort.ReadExisting());
-                Thread.Sleep(3000);
+                string command = _serialPort.ReadLine();
+                Console.WriteLine("[RS232] " + command);
+                Console.WriteLine(_serialPort.BaseStream);
+                _serialPort.WriteLine(command);
             }
         }
 

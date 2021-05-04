@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.Services
 {
@@ -39,7 +36,7 @@ namespace Server.Services
         {
             return
                 "This is chat help\n" +
-                "chat send -user -user - send message\n" +
+                "chat send -user -user -message - send message\n" +
                 "chat get -user - get user messages\n";
         }
 

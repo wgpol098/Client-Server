@@ -22,7 +22,6 @@ namespace Server
         List<ICommunicator> communicators = new List<ICommunicator>();
         Dictionary<string, IServiceModule> services = new Dictionary<string, IServiceModule>();
 
-        Task _checkerTask;
         //blokada dla communicators
         private object _lock = new object();
         //blokada dla listeners
@@ -37,6 +36,7 @@ namespace Server
             lock(_lock)
             {
                 communicators.Add(communicator);
+                if (Status == ServerStatus.Running) communicator.Start(new CommandD(Answer), RemoveCommunicator);
             }
         }
 
@@ -64,7 +64,6 @@ namespace Server
 
         void RemoveListener(IListener listener) 
         {
-            //lr.Stop();
             lock(_listenersLock)
             {
                 var lr = listeners.Find(x => x.Equals(listener));
@@ -75,8 +74,6 @@ namespace Server
         void Start()
         {
             for(int i = 0; i < listeners.Count; i++) listeners[i].Start(new CommunicatorD(AddCommunicator));
-            _checkerTask = new Task(() => Checker());
-            _checkerTask.Start();
             Status = ServerStatus.Running;
         }
 
@@ -86,35 +83,6 @@ namespace Server
             string serviceName = command.Split()[0];
             if (services.ContainsKey(serviceName)) return services[serviceName].AnswerCommand(command);
             return "Services is unavailable.\n";
-        }
-
-
-        //Trzebaby dodać wątek obserwujący stan usług, odpowiadaczy i nasłuchiwaczy i odpalający - wyłączający je, bądź usuwający
-        private void Checker()
-        {
-            Console.WriteLine("[SRV] Checker task = start");
-            while(true)
-            {
-                //jeśli zmieni się lista odpowiadaczy, bądź nasłuchiwaczy
-                //Na razie zrobię obsługę odpowiadaczy
-                //Może warto to rozdzielić na kilka wątków, jak będzie dużo odpowiadaczy to będą się tu działy dziwne rzeczy
-                //Jest tylko jeden odpowiadacz dla danej usługi
-
-                lock (_lock)
-                {
-                    for (int i = 0; i < communicators.Count; i++)
-                    {
-                        if (!communicators[i].Running)
-                        {
-                            //Może zaimplementować IEquals dla Communicatora?
-                            //Wyrzucany jest wyjątek, bo czasem zostanie usunięty
-                            communicators[i].Start(new CommandD(Answer), RemoveCommunicator);
-                        }
-                    }
-                }
-                //Thread.Sleep(3000);
-                //Console.WriteLine("[SRV] Checker running. No communicators: " + communicators.Count);
-            }
         }
 
         void WaitForStop()
