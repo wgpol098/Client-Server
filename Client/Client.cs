@@ -8,14 +8,12 @@ using System.Text;
 
 namespace Client
 {
+    //TODO: Przesyłanie plików przez każdy protokół
     class Client
     {
-        //Klient powinien umieć czytać komendy, na początek zrobiłbym czas pingu i jeśli wpisze się ping to jest wysyłany pakiet i jest on mierzony.
         static void Main(string[] args)
         {
             Start();
-
-           // Test0TCP();
         }
 
         static void Start()
@@ -28,6 +26,7 @@ namespace Client
                 Console.WriteLine("2. UDP");
                 Console.WriteLine("3. RS232");
                 Console.WriteLine("4. FTP");
+                Console.WriteLine("5. .Net remoting");
                 Console.WriteLine("0. Exit");
 
                 int protocol;
@@ -43,11 +42,25 @@ namespace Client
                         break;
                     case 4: StartFTP();
                         break;
+                    case 5: StartNetRemoting();
+                        break;
                     case 0: exitFlag = true;
                         break;
                     default: Console.WriteLine("Wybrano błędną opcję!");
                         break;
                 }
+            }
+        }
+
+        static void StartNetRemoting()
+        {
+            string command = string.Empty;
+            while(!command.Equals("logout"))
+            {
+                Console.WriteLine("Podaj komende:");
+                command = Console.ReadLine();
+                CommonNetRemoting obj = (CommonNetRemoting)Activator.GetObject(typeof(CommonNetRemoting), "tcp://localhost:65432/command");
+                Console.WriteLine(obj.Command(command));
             }
         }
 
@@ -85,40 +98,22 @@ namespace Client
 
         static void StartRS232()
         {
-            bool exitFlag = false;
             SerialPort sp = new SerialPort("COM1", 9600, Parity.None, 8, StopBits.One);
             sp.Open();
-            while (!exitFlag)
+            string command = string.Empty;
+            while (!command.Equals("logout")) ;
             {
-                string command;
                 Console.WriteLine("Podaj komende:");
                 command = Console.ReadLine();
-                sp.WriteLine(command);
-                command = sp.ReadLine();
+                sp.Write(command);
+                command = sp.ReadExisting();
                 Console.WriteLine(command);
             }
-        }
-
-        static UdpClient receiver;
-
-        static void Receive(IAsyncResult ar)
-        {
-            string server = "127.0.0.1";
-            IPEndPoint ipe = new IPEndPoint(IPAddress.Any, 0);
-            receiver.Connect(ipe);
-            byte[] data = receiver.EndReceive(ar, ref ipe);
-            string msg = Encoding.Unicode.GetString(data);
-            Console.WriteLine(msg);
-            receiver.BeginReceive(Receive, null);
         }
 
         //Wysyłanie danych przez UDP
         static void StartUDP()
         {
-            //Tworzenie nasłuchiwacza udp
-          //  receiver = new UdpClient(1234);
-           // receiver.BeginReceive(Receive, null);
-
             bool exitFlag = false;
             string server = "127.0.0.1";
             UdpClient client = new UdpClient();
@@ -133,32 +128,25 @@ namespace Client
                     Console.WriteLine("Podaj komende:");
                     command = Console.ReadLine();
 
+                    byte[] data;
+                    byte[] send;
                     string[] tmp = command.Split();
+                    string received = string.Empty;
                     switch(tmp[0])
                     {
                         case "ping":
-                            //while(true)
-                            {
-                                string message = Ping.Query(int.Parse(tmp[1]), int.Parse(tmp[2]));
-                                byte[] data = Encoding.ASCII.GetBytes(message);
-                                client.Send(data, data.Length);
-                                
-                            }
-              /*              byte[] send = client.Receive(ref ip);
-                            string receiveString = Encoding.ASCII.GetString(send);
-                            Console.WriteLine(receiveString);*/
+                            string message = Ping.Query(int.Parse(tmp[1]), int.Parse(tmp[2]));
+                            data = Encoding.ASCII.GetBytes(message);
+                            client.Send(data, data.Length);
+                            send = client.Receive(ref ip);
+                            received = Encoding.ASCII.GetString(send);
+                            Console.WriteLine(received);
                             break;
-                        case "chat":
-                            byte[] data1 = Encoding.ASCII.GetBytes(command);
-                            client.Send(data1, data1.Length);
-                            byte[] send1 = client.Receive(ref ip);
-                            string receiveString1 = Encoding.ASCII.GetString(send1);
-                            Console.WriteLine(receiveString1);
-                            break;
-                        case "logout":
-                            exitFlag = true;
-                            break;
-                        default: Console.WriteLine("Wpisano nieprawidłową komende!");
+                        default:
+                            data = Encoding.ASCII.GetBytes(command);
+                            client.Send(data, data.Length);
+                            send = client.Receive(ref ip);
+                            received = Encoding.ASCII.GetString(send);
                             break;
                     }
                 }
@@ -176,7 +164,6 @@ namespace Client
 
             var watch = System.Diagnostics.Stopwatch.StartNew();
             stream.Write(data, 0, data.Length);
-            //Console.Write("Wysłane: {0}", message);
 
             byte[] response = new byte[256];
             string responseStr = string.Empty;

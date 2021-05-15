@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Server.Services
@@ -6,7 +7,7 @@ namespace Server.Services
     class ChatService : IServiceModule
     {
         //<Odbiorca wiadomości, <Nadawca wiadomości, <Treść wiadomości>>>
-        private Dictionary<string, Dictionary<string, List<string>>> _messages = new Dictionary<string, Dictionary<string, List<string>>>(); 
+        private Dictionary<string, Dictionary<string, List<(DateTime, string)>>> _messages = new Dictionary<string, Dictionary<string, List<(DateTime, string)>>>(); 
 
         public string AnswerCommand(string command)
         {
@@ -50,12 +51,12 @@ namespace Server.Services
                 {
                     StringBuilder sr = new StringBuilder();
 
-                    Dictionary<string, List<string>> item = _messages[odbiorca];
+                    Dictionary<string, List<(DateTime, string)>> item = _messages[odbiorca];
 
                     foreach (var i in item)
                     {
                         sr.Append("Sender: " + i.Key + "\n");
-                        for (int j = 0; j < i.Value.Count; j++) sr.Append(i.Value[j] + "\n");
+                        for (int j = 0; j < i.Value.Count; j++) sr.Append(i.Value[j].Item1.ToString() + ": " + i.Value[j].Item2 + "\n");
                     }
                     return sr.ToString();
                 }
@@ -81,12 +82,12 @@ namespace Server.Services
                 {
                     if (_messages[odbiorca].ContainsKey(nadawca))
                     {
-                        if (_messages[odbiorca][nadawca] != null) _messages[odbiorca][nadawca].Add(wiadomosc);
-                        else _messages[odbiorca][nadawca] = new List<string>() { wiadomosc };
+                        if (_messages[odbiorca][nadawca] != null) _messages[odbiorca][nadawca].Add((DateTime.Now, wiadomosc));
+                        else _messages[odbiorca][nadawca] = new List<(DateTime, string)>() { (DateTime.Now, wiadomosc) };
                     }
-                    else _messages[odbiorca].Add(nadawca, new List<string>() { wiadomosc });
+                    else _messages[odbiorca].Add(nadawca, new List<(DateTime, string)>() { (DateTime.Now, wiadomosc) });
                 }
-                else _messages.Add(odbiorca, new Dictionary<string, List<string>>() { { nadawca, new List<string>() { wiadomosc } } });
+                else _messages.Add(odbiorca, new Dictionary<string, List<(DateTime, string)>>() { { nadawca, new List<(DateTime, string)>() { (DateTime.Now, wiadomosc) } } });
                 return true;
             }
             return false;

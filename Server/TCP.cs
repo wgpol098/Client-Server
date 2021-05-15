@@ -74,7 +74,7 @@ namespace Server
 
             //To musi być tutaj
             string data = string.Empty;
-            while (_client.Connected && stopwatch.ElapsedMilliseconds <= _time)
+            while (_client.Connected /*&& stopwatch.ElapsedMilliseconds <= _time*/)
             {
                 if (/*!data.Contains('3'.ToString()) && */ networkStream.DataAvailable)
                 {

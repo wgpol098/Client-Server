@@ -9,53 +9,47 @@ namespace Server
 
         public RS232Listener(SerialPort serialPort) => _serialPort = serialPort;
 
-        public void Start(CommunicatorD onConnect)
-        {
-            Console.WriteLine("[RS232] Incoming data:");
-            _serialPort.Open();
-            while(true)
-            {
-                string command = _serialPort.ReadLine();
-                Console.WriteLine("[RS232] " + command);
-                Console.WriteLine(_serialPort.BaseStream);
-                _serialPort.WriteLine(command);
-            }
-        }
+        //Nasłuchiwacz odpowiada jedynie za utworzenie odpowiadacza
+        public void Start(CommunicatorD onConnect) => onConnect(new RS232Communicator(_serialPort));
 
         public void Stop() => _serialPort.Close();
     }
 
+    //Trzeba użyć jeszcze onDisconnect
     class RS232Communicator : ICommunicator
     {
         private CommandD _onCommand;
         private CommunicatorD _onDisconnect;
         private SerialPort _serialPort;
-        private SerialPort _serialPort1;
-        public bool Running => throw new NotImplementedException();
+
+        public RS232Communicator(SerialPort serialPort)
+        {
+            _serialPort = serialPort;
+            _serialPort.DataReceived += new SerialDataReceivedEventHandler(Answer);
+        }
 
         public void Start(CommandD onCommand, CommunicatorD onDisconnect)
         {
-            //TODO: Później zostanie to prawidłowo zaimplementowane - na razie do testów
-            _serialPort = new SerialPort("COM1", 9600, Parity.None, 8, StopBits.One);
-            _serialPort1 = new SerialPort("COM2", 9600, Parity.None, 8, StopBits.One);
             _onCommand = onCommand;
             _onDisconnect = onDisconnect;
+            _serialPort.Open();
         }
 
-        public void AnswerTask()
+        private void Answer(object sender, SerialDataReceivedEventArgs e)
         {
-            while(_serialPort.IsOpen)
+            try
             {
-                string message = _serialPort1.ReadExisting();
-                string answer = _onCommand(message);
-                _serialPort.Write(answer);
+                SerialPort sp = (SerialPort)sender;
+                string command = sp.ReadExisting();
+                Console.WriteLine("[RS232] " + command);
+                sp.Write(_onCommand(command));
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
         }
 
-        public void Stop()
-        {
-            _serialPort.Close();
-            _serialPort1.Close();
-        }
+        public void Stop() => _serialPort.Close();
     }
 }
