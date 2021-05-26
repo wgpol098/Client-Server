@@ -11,6 +11,10 @@ namespace Server
         private TcpChannel _tcpChannel;
 
         public NETRemotingListener(TcpChannel tcpChannel) => _tcpChannel = tcpChannel;
+        public NETRemotingListener(string port)
+        {
+            _tcpChannel = new TcpChannel(int.Parse(port));
+        }
 
         public void Start(CommunicatorD onConnect)
         {

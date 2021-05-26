@@ -9,13 +9,28 @@ namespace Server
 
         public RS232Listener(SerialPort serialPort) => _serialPort = serialPort;
 
-        //Nasłuchiwacz odpowiada jedynie za utworzenie odpowiadacza
-        public void Start(CommunicatorD onConnect) => onConnect(new RS232Communicator(_serialPort));
+        //TODO: Tutaj można dodać jeszcze więcej opcji
+        public RS232Listener(string config)
+        {
+            if(config != null)
+            {
+                string[] tmp = config.Split();
+                if(tmp.Length == 1) _serialPort = new SerialPort(tmp[0]);
+                else _serialPort = new SerialPort(tmp[0], int.Parse(tmp[1]));
+            }
+        }
 
-        public void Stop() => _serialPort.Close();
+        public void Start(CommunicatorD onConnect)
+        {
+            if(_serialPort != null) onConnect(new RS232Communicator(_serialPort));
+        }
+
+        public void Stop()
+        {
+            if(_serialPort != null) _serialPort.Close();
+        }
     }
 
-    //Trzeba użyć jeszcze onDisconnect
     class RS232Communicator : ICommunicator
     {
         private CommandD _onCommand;
@@ -40,13 +55,14 @@ namespace Server
             try
             {
                 SerialPort sp = (SerialPort)sender;
-                string command = sp.ReadExisting();
+                string command = sp.ReadLine();
                 Console.WriteLine("[RS232] " + command);
                 sp.Write(_onCommand(command));
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                _onDisconnect(this);
             }
         }
 

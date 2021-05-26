@@ -32,7 +32,7 @@ namespace Server.Services
         private string Help()
         {
             return
-                "This is command ftp \n" +
+                "This is ftp help\n" +
                 "ftp send -filename - send file\n" +
                 "ftp get -filename - download file\n" +
                 "ftp list - show available files in server";

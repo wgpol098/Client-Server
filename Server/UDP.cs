@@ -12,7 +12,15 @@ namespace Server
         private IPEndPoint _ipEndPoint;
         public UDPListener(IPEndPoint iPEnd) => _ipEndPoint = iPEnd;
 
-        //Nasłuchiwacz tylko tworzy odpowiadacza
+        public UDPListener(string config)
+        {
+            if(config != null)
+            {
+                string[] tmp = config.Split();
+                if (tmp.Length == 2) _ipEndPoint = new IPEndPoint(IPAddress.Parse(tmp[0]), int.Parse(tmp[1]));
+            }
+        }
+
         public void Start(CommunicatorD onConnect)
         {
             _udpClient = new UdpClient(_ipEndPoint);

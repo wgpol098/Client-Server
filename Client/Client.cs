@@ -101,12 +101,12 @@ namespace Client
             SerialPort sp = new SerialPort("COM1", 9600, Parity.None, 8, StopBits.One);
             sp.Open();
             string command = string.Empty;
-            while (!command.Equals("logout")) ;
+            while (!command.Equals("logout"))
             {
                 Console.WriteLine("Podaj komende:");
                 command = Console.ReadLine();
-                sp.Write(command);
-                command = sp.ReadExisting();
+                sp.Write(command + Environment.NewLine);
+                command = sp.ReadLine();
                 Console.WriteLine(command);
             }
         }

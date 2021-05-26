@@ -44,7 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FTP.cs" />
+    <Compile Include="Files.cs" />
     <Compile Include="Interfaces.cs" />
     <Compile Include="NETRemoting.cs" />
     <Compile Include="RS232.cs" />

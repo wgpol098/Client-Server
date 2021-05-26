@@ -15,6 +15,19 @@ namespace Server
         private IPEndPoint _ipEndPoint;
 
         public TCPListener(IPEndPoint iPEndPoint) => _ipEndPoint = iPEndPoint;
+
+        public TCPListener(string config)
+        {
+            if(config != null)
+            {
+                string[] tmp = config.Split();
+                if (tmp.Length >= 2)
+                {
+                    _ipEndPoint = new IPEndPoint(IPAddress.Parse(tmp[0]), int.Parse(tmp[1]));
+                }
+            }
+        }
+
         private void HandleAcceptTcpClient(IAsyncResult result)
         {
             TcpClient tcp = _listener.EndAcceptTcpClient(result);

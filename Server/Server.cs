@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO.Ports;
 using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Server
 {
@@ -76,7 +75,7 @@ namespace Server
         void Start()
         {
             //Zawsze dodaje usługę konfiguracji.
-            AddServiceModule("conf", new ConfigurationService(new ConfigurationService.AddListenerD(AddListener)));
+            AddServiceModule("conf", new ConfigurationService(new ConfigurationService.AddListenerD(AddListener), new ConfigurationService.AddServiceD(AddServiceModule)));
 
             for (int i = 0; i < listeners.Count; i++) listeners[i].Start(new CommunicatorD(AddCommunicator));
             Status = ServerStatus.Running;
@@ -85,9 +84,13 @@ namespace Server
         //Metoda odpowiedzialna za odpowiadanie 
         private string Answer(string command)
         {
-            string serviceName = command.Split()[0];
-            if (services.ContainsKey(serviceName)) return services[serviceName].AnswerCommand(command);
-            return "Services is unavailable." + Environment.NewLine;
+            if( command != null)
+            {
+                string serviceName = command.Split()[0];
+                if (services.ContainsKey(serviceName)) return services[serviceName].AnswerCommand(command);
+                return "Services is unavailable." + Environment.NewLine;
+            }
+            return "Command was null!";
         }
 
         void WaitForStop()
@@ -119,7 +122,9 @@ namespace Server
             srv.AddListener(new TCPListener(new IPEndPoint(IPAddress.Any, 12345)));
             srv.AddListener(new UDPListener(new IPEndPoint(IPAddress.Any, 12346)));
             srv.AddListener(new RS232Listener(new SerialPort("COM2", 9600, Parity.None, 8, StopBits.One)));
-            srv.AddListener(new NETRemotingListener(new System.Runtime.Remoting.Channels.Tcp.TcpChannel(65432)));
+            srv.AddListener(new FilesListener("FTP"));
+            //Wystarczy podać port
+            srv.AddListener(new NETRemotingListener("65432"));
             //srv.AddListener(new FTPListener());
             srv.WaitForStop();
             srv.Stop();
