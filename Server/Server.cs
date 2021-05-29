@@ -75,7 +75,13 @@ namespace Server
         void Start()
         {
             //Zawsze dodaje usługę konfiguracji.
-            AddServiceModule("conf", new ConfigurationService(new ConfigurationService.AddListenerD(AddListener), new ConfigurationService.AddServiceD(AddServiceModule)));
+            AddServiceModule("conf", new ConfigurationService
+                (
+                    new ConfigurationService.AddListenerD(AddListener), 
+                    new ConfigurationService.AddServiceD(AddServiceModule),
+                    new ConfigurationService.RemoveServiceModuleD(RemoveServiceModule),
+                    new ConfigurationService.RemoveListenerD(RemoveListener)
+                ));
 
             for (int i = 0; i < listeners.Count; i++) listeners[i].Start(new CommunicatorD(AddCommunicator));
             Status = ServerStatus.Running;

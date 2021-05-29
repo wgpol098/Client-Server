@@ -7,7 +7,7 @@ namespace Common
         public static string Query(int sizeRequest, int sizeResponse)
         {
             string query = $"ping {sizeResponse} ";
-            return $"{query}{Trash(sizeRequest - query.Length - 1)}\n";
+            return $"{query}{Trash(sizeRequest - query.Length - 1)}";
         }
 
         private static string Trash(int count)
@@ -23,7 +23,7 @@ namespace Common
         {
             string[] tab = line.Split();
             string response = "pong ";
-            return $"{response}{Trash(int.Parse(tab[1]) - response.Length - 2)}\n";
+            return $"{response}{Trash(int.Parse(tab[1]) - response.Length - 2)}";
         }
     }
 }

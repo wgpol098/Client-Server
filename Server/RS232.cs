@@ -57,7 +57,7 @@ namespace Server
                 SerialPort sp = (SerialPort)sender;
                 string command = sp.ReadLine();
                 Console.WriteLine("[RS232] " + command);
-                sp.Write(_onCommand(command));
+                sp.WriteLine(_onCommand(command));
             }
             catch(Exception ex)
             {
