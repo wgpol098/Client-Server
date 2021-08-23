@@ -19,7 +19,8 @@ namespace Server
         public void Start(CommunicatorD onConnect)
         {
             onConnect(new NETRemotingCommunicator(_tcpChannel));
-            Console.WriteLine("[.net remoting] Waiting for clients!");}
+            Console.WriteLine("[.net remoting] Waiting for clients!");
+        }
 
         public void Stop() { return; }
     }

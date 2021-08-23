@@ -5,6 +5,8 @@ using System.IO.Ports;
 using System.Net;
 using System.Threading;
 
+
+//TODO: Usuwanie komunikatora, gdy nastąpi rozłączenie połączenia
 namespace Server
 {
     public enum ServerStatus
@@ -47,7 +49,6 @@ namespace Server
                 listeners.Add(listener);
                 if (Status == ServerStatus.Running) listener.Start(new CommunicatorD(AddCommunicator));
             }
-
             Console.WriteLine("Added listener!");
         }
 
@@ -56,11 +57,9 @@ namespace Server
         void RemoveCommunicator(ICommunicator communicator) 
         {
             var cm = communicators.Find(x => x.Equals(communicator));
-            lock(_lock)
-            {
-                communicators.Remove(cm);
-                Console.WriteLine("[SRV] Removed communicator");
-            }
+            cm.Stop();
+            lock(_lock) { communicators.Remove(cm); }
+            Console.WriteLine("[SRV] Removed communicator");
         }
 
         void RemoveListener(IListener listener) 
@@ -128,7 +127,7 @@ namespace Server
             srv.AddListener(new TCPListener(new IPEndPoint(IPAddress.Any, 12345)));
             srv.AddListener(new UDPListener(new IPEndPoint(IPAddress.Any, 12346)));
             srv.AddListener(new RS232Listener(new SerialPort("COM2", 9600, Parity.None, 8, StopBits.One)));
-            srv.AddListener(new FilesListener("FTP"));
+            srv.AddListener(new FilesListener("FTasdasdP"));
             //Wystarczy podać port
             srv.AddListener(new NETRemotingListener("65432"));
             //srv.AddListener(new FTPListener());

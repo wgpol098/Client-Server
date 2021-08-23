@@ -13,8 +13,7 @@ namespace Server
         public FilesListener(string folderpath)
         {
             _folderName = folderpath;
-            //Sprwadzanie czy folder istnieje - jeśli tak to dopiero działaj
-            // jeśli nie to stwórz folder
+            if(!Directory.Exists(_folderName)) Directory.CreateDirectory(_folderName);
             watcher = new FileSystemWatcher(folderpath);
         }
         public void Start(CommunicatorD onConnect)
@@ -23,25 +22,18 @@ namespace Server
             Console.WriteLine("[Files Listener] - START!");
             string[] fileList = Directory.GetFiles(_folderName);
 
-            for(int i = 0; i < fileList.Length; i++)
-            {
-                Console.WriteLine(fileList[i]);
-            }
+            for(int i = 0; i < fileList.Length; i++) Console.WriteLine(fileList[i]);
 
             watcher.NotifyFilter = NotifyFilters.LastWrite;
-
             watcher.Changed += OnChanged;
             watcher.Filter = "*.txt";
-
             watcher.EnableRaisingEvents = true;
         }
 
         //Kiedy plik się zmienia, bądź zostaje utworzony
         private void OnChanged(object sender, FileSystemEventArgs e)
         {
-            
-            Console.WriteLine($"Changed: {e.FullPath}");
-
+            Console.WriteLine($"[Files Listener] Changed: {e.FullPath}");
             if (e.ChangeType == WatcherChangeTypes.Changed) _onConnect(new FilesCommunicator(e.FullPath));
         }
 

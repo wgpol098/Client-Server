@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -58,38 +57,25 @@ namespace Server
         private CommandD _onCommand;
         private CommunicatorD _onDisconnect;
 
-        private int _time = 10000;
-
-        //Start powinien s
         public void Start(CommandD onCommand, CommunicatorD onDisconnect)
         {
-            //Tutaj możliwe jest ustawianie timeoutu połączenia
-            _client.ReceiveTimeout = _time;
-            _client.SendTimeout = _time;
             _onCommand = onCommand;
             _onDisconnect = onDisconnect;
             task = new Task(() => AnswerTask());
             task.Start();
         }
 
-        //client Connecter pokazuje stan na poprzednią operację, trzeba pingować klienta, żeby okazało się czy wszystko jest dobrze
-        //Może trzeba zrobić jakiś service, który będzie odpowiedzialny za kończenie połączenia?
-        //Można zrobić jakiś ping co dwie sekundy podtrzymujący połączenie
-
-        //Ta metoda działa w tle
+        //Background Method
         private void AnswerTask()
         {
             Console.WriteLine("[TCP] Communicator start");
             NetworkStream networkStream = _client.GetStream();
             byte[] bytes = new byte[256];
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
 
-            //To musi być tutaj
             string data = string.Empty;
-            while (_client.Connected /*&& stopwatch.ElapsedMilliseconds <= _time*/)
+            while (_client.Connected)
             {
-                if (/*!data.Contains('3'.ToString()) && */ networkStream.DataAvailable)
+                if (networkStream.DataAvailable)
                 {
                     int len = networkStream.Read(bytes, 0, bytes.Length);
                     data += Encoding.ASCII.GetString(bytes, 0, len);
@@ -99,9 +85,12 @@ namespace Server
                     string message = _onCommand(data);
                     bytes = Encoding.ASCII.GetBytes(message);
                     networkStream.Write(bytes, 0, bytes.Length);
-                    Console.Write("[TCP] Wysłane: {0}", message);
-                    stopwatch.Restart();
+                    Console.Write("[TCP] Send: {0}", message);
                     data = string.Empty;
+                }
+                if(_client.Client.Poll(0, SelectMode.SelectRead))
+                {
+                    if (_client.Client.Receive(new byte[1], SocketFlags.Peek) == 0) _onDisconnect(this);
                 }
             }
             networkStream.Close();
@@ -110,7 +99,6 @@ namespace Server
 
         public void Stop()
         {
-            _onDisconnect(this);
             _client.Close();
             Console.WriteLine("[TCP] Communicator stopped");
         }

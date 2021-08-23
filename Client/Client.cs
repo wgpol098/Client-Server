@@ -60,20 +60,18 @@ namespace Client
             string command = string.Empty;
             while(true)
             {
-                Console.WriteLine("Podaj komende:");
-                command = Console.ReadLine();
+                command = GetCommand();
                 if (command.Equals("logout")) break;
-                if (command.Contains(" send ")) command += " " + FTP.FileToString(command.Split()[2]);
-                if (command.Contains("ping ")) command = Ping.Query(int.Parse(command.Split()[1]), int.Parse(command.Split()[2]));
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 CommonNetRemoting obj = (CommonNetRemoting)Activator.GetObject(typeof(CommonNetRemoting), "tcp://localhost:65432/command");
-                if(command.Contains(" get ")) FTP.StringToFile(obj.Command(command), command.Split()[2]);
+                if(command.Contains("ftp get ")) FTP.StringToFile(obj.Command(command), command.Split()[2]);
                 else Console.WriteLine(obj.Command(command));
                 Console.WriteLine("CommandTime: " + watch.Elapsed);
                 Console.WriteLine("------------------");
             }
         }
 
+        //TODO: Do zrobienia 
         static void StartFTP()
         {
             try
@@ -92,7 +90,6 @@ namespace Client
                 StreamReader reader = new StreamReader(stream);
 
                 Console.WriteLine(reader.ReadToEnd());
-
                 Console.WriteLine("Directory List Complete status {0}", response.StatusDescription);
 
                 reader.Close();
@@ -114,15 +111,12 @@ namespace Client
             string response = string.Empty;
             while (true)
             {
-                Console.WriteLine("Podaj komende:");
-                command = Console.ReadLine();
+                command = GetCommand();
                 if (command.Equals("logout")) break;
-                if (command.Contains(" send ")) command += " " + FTP.FileToString(command.Split()[2]);
-                if (command.Contains("ping ")) command = Ping.Query(int.Parse(command.Split()[1]), int.Parse(command.Split()[2]));
                 var watch = System.Diagnostics.Stopwatch.StartNew();
                 sp.WriteLine(command);
                 response = sp.ReadLine();
-                if (command.Contains(" get ")) FTP.StringToFile(response, command.Split()[2]);
+                if (command.Contains("ftp get ")) FTP.StringToFile(response, command.Split()[2]);
                 else Console.WriteLine(command);
                 Console.WriteLine("CommandTime: " + watch.Elapsed);
                 Console.WriteLine("------------------");
@@ -144,11 +138,8 @@ namespace Client
                 string response = string.Empty;
                 while (true)
                 {
-                    Console.WriteLine("Podaj komende:");
-                    command = Console.ReadLine();
+                    command = GetCommand();
                     if (command.Equals("logout")) break;
-                    if (command.Contains(" send ")) command += " " + FTP.FileToString(command.Split()[2]);
-                    if (command.Contains("ping ")) command = Ping.Query(int.Parse(command.Split()[1]), int.Parse(command.Split()[2]));
 
                     byte[] data = Encoding.ASCII.GetBytes(command + Environment.NewLine);
                     var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -157,54 +148,59 @@ namespace Client
                     byte[] received = client.Receive(ref ip);
                     response = Encoding.ASCII.GetString(received);
 
-                    if (command.Contains(" get ")) FTP.StringToFile(response, command.Split()[2]);
+                    if (command.Contains("ftp get ")) FTP.StringToFile(response, command.Split()[2]);
                     else Console.WriteLine(command);
                     Console.WriteLine("CommandTime: " + watch.Elapsed);
                     Console.WriteLine("------------------");
                 }
                 client.Close();
             }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
+            catch(Exception e) { Console.WriteLine(e.ToString()); }
+        }
+
+        static string GetCommand()
+        {
+            Console.WriteLine("Give the command:");
+            return CreateCommand(Console.ReadLine());
+        }
+
+        static string CreateCommand(string command)
+        {
+            if (command.Contains(" send ")) return command + " " + FTP.FileToString(command.Split()[2]);
+            if (command.Contains("ping ")) return Ping.Query(int.Parse(command.Split()[1]), int.Parse(command.Split()[2]));
+            return command;
         }
 
         static void StartTCP()
         {
             try
             {
-                //TODO: Trzeba ogarnać co się stanie jak nie ma połączenia
                 string server = "localhost";
                 TcpClient client = new TcpClient(server, 12345);
                 NetworkStream stream = client.GetStream();
 
                 string command = string.Empty;
-                string responseStr = string.Empty;
+                StringBuilder responseStr = new StringBuilder();
                 while (true)
                 {
-                    Console.WriteLine("Podaj komendę:");
-                    command = Console.ReadLine();
-
+                    command = GetCommand();
                     if (command.Equals("logout")) break;
-                    if (command.Contains(" send ")) command += " " + FTP.FileToString(command.Split()[2]);
-                    if (command.Contains("ping ")) command = Ping.Query(int.Parse(command.Split()[1]), int.Parse(command.Split()[2]));
 
                     byte[] data = Encoding.ASCII.GetBytes(command + Environment.NewLine);
                     var watch = System.Diagnostics.Stopwatch.StartNew();
                     stream.Write(data, 0, data.Length);
                     byte[] response = new byte[256];
-                    responseStr = string.Empty;
+                    responseStr = new StringBuilder();
                     int bytes;
                     do
                     {
                         bytes = stream.Read(response, 0, response.Length);
-                        responseStr += Encoding.ASCII.GetString(response, 0, bytes);
+                        responseStr.Append(Encoding.ASCII.GetString(response, 0, bytes));
                     }
                     while (stream.DataAvailable);
 
-                    if (command.Contains(" get ")) FTP.StringToFile(responseStr, command.Split()[2]);
-                    else Console.WriteLine(command);
+                    if (command.Contains("ftp get ")) FTP.StringToFile(responseStr.ToString(), command.Split()[2]);
+                    else Console.WriteLine(responseStr.ToString());
                     Console.WriteLine("CommandTime: " + watch.Elapsed);
                     Console.WriteLine("------------------");
 
@@ -212,10 +208,7 @@ namespace Client
                 stream.Close();
                 client.Close();
             }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+            catch(Exception e) { Console.WriteLine(e.Message); }
         }
     }
 }

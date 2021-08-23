@@ -6,7 +6,7 @@ namespace Server.Services
 {
     class ChatService : IServiceModule
     {
-        //<Odbiorca wiadomości, <Nadawca wiadomości, <Treść wiadomości>>>
+        //<Odbiorca wiadomości, <Nadawca wiadomości, <Data, Treść wiadomości>>>
         private Dictionary<string, Dictionary<string, List<(DateTime, string)>>> _messages = new Dictionary<string, Dictionary<string, List<(DateTime, string)>>>(); 
 
         public string AnswerCommand(string command)
@@ -22,15 +22,15 @@ namespace Server.Services
                 switch (command.Split()[1])
                 {
                     case "send":
-                        if(AddMessage(command)) return "Successfully send message!\n";
-                        else return "Command is incorrect!\n";
+                        if(AddMessage(command)) return "Successfully send message!";
+                        else return "Command is incorrect!";
                     case "get": return GetMessage(command);
                     case "help": return Help();
                     default:
-                        return "Command is incorrect!\n";
+                        return "Command is incorrect!";
                 }
             }
-            return "Command is incorrect!\n";
+            return "Command is incorrect!";
         }
 
         private string Help()
@@ -60,9 +60,9 @@ namespace Server.Services
                     }
                     return sr.ToString();
                 }
-                return "No messages for " + odbiorca + "\n";
+                return "No messages for " + odbiorca;
             }
-            return "Command is incorrect!\n";
+            return "Command is incorrect!";
         }
 
         private bool AddMessage(string command)
