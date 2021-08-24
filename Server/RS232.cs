@@ -1,8 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO.Ports;
 
 namespace Server
 {
+    [Description("")]
     class RS232Listener : IListener
     {
         private SerialPort _serialPort;

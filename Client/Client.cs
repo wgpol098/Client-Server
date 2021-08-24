@@ -9,8 +9,6 @@ using System.Text;
 namespace Client
 {
     //TODO: Przesyłanie plików przez każdy protokół
-    //Trzeba sprwadzić co się stanie jak podamy błędne dane do common.ping dla każdego protokołu
-    //Można zrobić encoding dla każdego protokołu
     class Client
     {
         static void Main(string[] args)
@@ -54,20 +52,26 @@ namespace Client
             }
         }
 
-        //NetRemoting działa prawidłowo dla każdego przypadku
         static void StartNetRemoting()
         {
             string command = string.Empty;
-            while(true)
+            try
             {
-                command = GetCommand();
-                if (command.Equals("logout")) break;
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-                CommonNetRemoting obj = (CommonNetRemoting)Activator.GetObject(typeof(CommonNetRemoting), "tcp://localhost:65432/command");
-                if(command.Contains("ftp get ")) FTP.StringToFile(obj.Command(command), command.Split()[2]);
-                else Console.WriteLine(obj.Command(command));
-                Console.WriteLine("CommandTime: " + watch.Elapsed);
-                Console.WriteLine("------------------");
+                while (true)
+                {
+                    command = GetCommand();
+                    if (command.Equals("logout")) break;
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
+                    CommonNetRemoting obj = (CommonNetRemoting)Activator.GetObject(typeof(CommonNetRemoting), "tcp://localhost:65432/command");
+                    if (command.Contains("ftp get ")) FTP.StringToFile(obj.Command(command), command.Split()[2]);
+                    else Console.WriteLine(obj.Command(command));
+                    Console.WriteLine("CommandTime: " + watch.Elapsed);
+                    Console.WriteLine("------------------");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message.ToString());
             }
         }
 
@@ -105,21 +109,30 @@ namespace Client
         //TODO: server list albo trzeba obsłużyć albo prerobić
         static void StartRS232()
         {
-            SerialPort sp = new SerialPort("COM1", 9600, Parity.None, 8, StopBits.One);
-            sp.Open();
-            string command = string.Empty;
-            string response = string.Empty;
-            while (true)
+            try
             {
-                command = GetCommand();
-                if (command.Equals("logout")) break;
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-                sp.WriteLine(command);
-                response = sp.ReadLine();
-                if (command.Contains("ftp get ")) FTP.StringToFile(response, command.Split()[2]);
-                else Console.WriteLine(command);
-                Console.WriteLine("CommandTime: " + watch.Elapsed);
-                Console.WriteLine("------------------");
+                using (SerialPort sp = new SerialPort("COM1", 9600, Parity.None, 8, StopBits.One))
+                {
+                    sp.Open();
+                    string command = string.Empty;
+                    string response = string.Empty;
+                    while (true)
+                    {
+                        command = GetCommand();
+                        if (command.Equals("logout")) break;
+                        var watch = System.Diagnostics.Stopwatch.StartNew();
+                        sp.WriteLine(command);
+                        response = sp.ReadLine();
+                        if (command.Contains("ftp get ")) FTP.StringToFile(response, command.Split()[2]);
+                        else Console.WriteLine(command);
+                        Console.WriteLine("CommandTime: " + watch.Elapsed);
+                        Console.WriteLine("------------------");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message.ToString());  
             }
         }
 
@@ -176,37 +189,39 @@ namespace Client
             try
             {
                 string server = "localhost";
-                TcpClient client = new TcpClient(server, 12345);
-                NetworkStream stream = client.GetStream();
-
-                string command = string.Empty;
-                StringBuilder responseStr = new StringBuilder();
-                while (true)
+                
+                using(TcpClient client = new TcpClient(server, 12345))
                 {
-                    command = GetCommand();
-                    if (command.Equals("logout")) break;
-
-                    byte[] data = Encoding.ASCII.GetBytes(command + Environment.NewLine);
-                    var watch = System.Diagnostics.Stopwatch.StartNew();
-                    stream.Write(data, 0, data.Length);
-                    byte[] response = new byte[256];
-                    responseStr = new StringBuilder();
-                    int bytes;
-                    do
+                    NetworkStream stream = client.GetStream();
+                    string command = string.Empty;
+                    StringBuilder responseStr = new StringBuilder();
+                    while (true)
                     {
-                        bytes = stream.Read(response, 0, response.Length);
-                        responseStr.Append(Encoding.ASCII.GetString(response, 0, bytes));
+                        command = GetCommand();
+                        if (command.Equals("logout")) break;
+
+                        byte[] data = Encoding.ASCII.GetBytes(command + Environment.NewLine);
+                        var watch = System.Diagnostics.Stopwatch.StartNew();
+                        stream.Write(data, 0, data.Length);
+                        byte[] response = new byte[256];
+                        responseStr = new StringBuilder();
+                        int bytes;
+                        do
+                        {
+                            bytes = stream.Read(response, 0, response.Length);
+                            responseStr.Append(Encoding.ASCII.GetString(response, 0, bytes));
+                        }
+                        while (stream.DataAvailable);
+
+                        if (command.Contains("ftp get ")) FTP.StringToFile(responseStr.ToString(), command.Split()[2]);
+                        else Console.WriteLine(responseStr.ToString());
+                        Console.WriteLine("CommandTime: " + watch.Elapsed);
+                        Console.WriteLine("------------------");
+
                     }
-                    while (stream.DataAvailable);
-
-                    if (command.Contains("ftp get ")) FTP.StringToFile(responseStr.ToString(), command.Split()[2]);
-                    else Console.WriteLine(responseStr.ToString());
-                    Console.WriteLine("CommandTime: " + watch.Elapsed);
-                    Console.WriteLine("------------------");
-
+                    stream.Close();
                 }
-                stream.Close();
-                client.Close();
+
             }
             catch(Exception e) { Console.WriteLine(e.Message); }
         }

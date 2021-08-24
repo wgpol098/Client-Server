@@ -85,7 +85,7 @@ namespace Server
                     string message = _onCommand(data);
                     bytes = Encoding.ASCII.GetBytes(message);
                     networkStream.Write(bytes, 0, bytes.Length);
-                    Console.Write("[TCP] Send: {0}", message);
+                    Console.WriteLine("[TCP] Send: {0}", message);
                     data = string.Empty;
                 }
                 if(_client.Client.Poll(0, SelectMode.SelectRead))

@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace Server.Services
 {
     //TODO: Przetestować działanie tej usługi
-    //Wydaje mi się, że mam tutaj błędne indeksy w czytaniu informacji 
+    //TODO: Wydaje mi się, że mam tutaj błędne indeksy w czytaniu informacji 
     class ConfigurationService : IServiceModule
     {
         public delegate void AddListenerD(IListener listener);
@@ -46,6 +47,7 @@ namespace Server.Services
             return "Command is incorrect!" + Environment.NewLine;
         }
 
+        //TODO: Do uzupełnienia
         private string Help()
         {
             return "This is conf help\n" +
@@ -54,10 +56,10 @@ namespace Server.Services
                 "conf removelistener servicetype config" +
                 "conf removeservice servicetype name" +
                 "examples:" +
-                "conf addlistener name tcp address port" +
-                "conf addlistener name udp address port" +
-                "conf addlistener name rs232 port [boundrate]" +
-                "conf addlistener name netremoting tcpchannel" +
+                "conf addlistener tcp address port" +
+                "conf addlistener udp address port" +
+                "conf addlistener rs232 port [boundrate]" +
+                "conf addlistener netremoting tcpchannel" +
                 "conf addservice ftp name foldername" +
                 "conf removeservice name" +
                 "conf removelistener tcp address port";
@@ -68,37 +70,27 @@ namespace Server.Services
             if (command.Length > 3)
             {
                 try { _removeServiceModule(command[3]); }
-                catch(Exception ex) { return ex.Message; }
+                catch(Exception ex) { return ex.Message.ToString(); }
             }
             return "Command is incorrect!" + Environment.NewLine; 
         }
 
-        //TODO: Trzeba zrobić jakieś porównanie, żeby to normalnie móc usunąć
         private string RemoveListener(string[] command)
         {
             StringBuilder sb = new StringBuilder();
-            for (int i = 4; i < command.Length; i++) sb.Append(command[i] + " ");
-
-            switch (command[3])
+            for (int i = 3; i < command.Length; i++) sb.Append(command[i] + " ");
+            try
             {
-                case "tcp":
-                    try { _removeListener(new TCPListener(sb.ToString())); }
-                    catch(Exception ex) { return ex.Message; }
-                    return "Successfull removedd listener!" + Environment.NewLine;
-                case "udp":
-                    try { _removeListener(new UDPListener(sb.ToString())); }
-                    catch(Exception ex) { return ex.Message; }
-                    return "Successfull removedd listener!" + Environment.NewLine;
-                case "netremoting":
-                    try { _removeListener(new NETRemotingListener(sb.ToString())); }
-                    catch(Exception ex) { return ex.Message; }
-                    return "Successfull removedd listener!" + Environment.NewLine;
-                case "rs232":
-                    try { _removeListener(new RS232Listener(sb.ToString())); }
-                    catch(Exception ex) { return ex.Message; }
-                    return "Successfull removedd listener!" + Environment.NewLine;
-                default: return "Listener is incorrect" + Environment.NewLine;
+                Type t = Type.GetType("Server." + command[2], false, true);
+                if (t.GetInterfaces().Contains(typeof(IListener)))
+                {
+                    object ob = Activator.CreateInstance(t, sb.ToString());
+                    _removeListener((IListener)ob);
+                }
+                else return "Listener is incorrect!";
             }
+            catch(Exception ex) {  return ex.Message.ToString();}
+            return "Successfull removed listener!";
         }
 
         private string AddService(string[] command)
@@ -121,53 +113,25 @@ namespace Server.Services
             }
         }
 
-        //!!!!
-        //Tutaj nazwa jest zbędna
+        //TODO: Przetestowanie dodawania błędnych danych w stringu do _addListener
         private string AddListener(string[] command)
         {
-            //command[2] - to nazwa
             StringBuilder sb = new StringBuilder();
-            for(int i = 4; i < command.Length; i++) sb.Append(command[i] + " ");
+            for(int i = 3; i < command.Length; i++) sb.Append(command[i] + " ");
 
             Console.WriteLine("[conf] " + sb.ToString());
-            switch(command[3])
+            try
             {
-                //Trzeba posprawdzać te długości i wszystkie listenery, czy działają prawidłowo
-                case "tcp": 
-                    if(command.Length > 5)
-                    {
-                        try { _addListener(new TCPListener(sb.ToString())); }
-                        catch(Exception ex) { return ex.Message; }
-                        return "Successfull created listener!" + Environment.NewLine;
-                    }
-                    break;
-                case "udp":
-                    if(command.Length > 5)
-                    {
-                        try { _addListener(new UDPListener(sb.ToString())); }
-                        catch(Exception ex) { return ex.Message; }
-                        return "Successfull created listener!" + Environment.NewLine;
-                    }
-                    break;
-                case "netremoting":
-                    if(command.Length > 5)
-                    {
-                        try { _addListener(new NETRemotingListener(sb.ToString())); }
-                        catch(Exception ex) { return ex.Message; }
-                        return "Succesfull created listener!" + Environment.NewLine;
-                    }
-                    break;
-                case "rs232":
-                    if(command.Length > 5)
-                    {
-                        try { _addListener(new RS232Listener(sb.ToString())); }
-                        catch(Exception ex) { return ex.Message; }
-                        return "Succesfull created listener!" + Environment.NewLine;
-                    }
-                    break;
-                default: return "Command is incorrect!" + Environment.NewLine;
+                Type t = Type.GetType("Server." + command[2], false, true);
+                if (t.GetInterfaces().Contains(typeof(IListener)))
+                {
+                    object ob = Activator.CreateInstance(t, sb.ToString());
+                    _addListener((IListener)ob);
+                }
+                else return "Listener is incorrect!";
             }
-            return "Successfull created listener!" + Environment.NewLine;
+            catch (Exception ex) {  return ex.Message.ToString(); }
+            return "Successfull created listener!";
         }
     }
 }
