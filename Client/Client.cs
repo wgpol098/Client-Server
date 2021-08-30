@@ -9,6 +9,7 @@ using System.Text;
 namespace Client
 {
     //TODO: Przesyłanie plików przez każdy protokół
+    //TODO: Wyświetlanie prawidłowych odpowiedzi z serwera dla każdego medium transmisyjnego
     class Client
     {
         static void Main(string[] args)
@@ -162,7 +163,7 @@ namespace Client
                     response = Encoding.ASCII.GetString(received);
 
                     if (command.Contains("ftp get ")) FTP.StringToFile(response, command.Split()[2]);
-                    else Console.WriteLine(command);
+                    else Console.WriteLine(response);
                     Console.WriteLine("CommandTime: " + watch.Elapsed);
                     Console.WriteLine("------------------");
                 }
@@ -180,6 +181,7 @@ namespace Client
         static string CreateCommand(string command)
         {
             if (command.Contains(" send ")) return command + " " + FTP.FileToString(command.Split()[2]);
+            //TODO: To rodzi problemy jak chce stworzyć usługę ping
             if (command.Contains("ping ")) return Ping.Query(int.Parse(command.Split()[1]), int.Parse(command.Split()[2]));
             return command;
         }

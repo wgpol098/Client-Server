@@ -7,6 +7,7 @@ using System.Threading;
 
 
 //TODO: Usuwanie komunikatora, gdy nastąpi rozłączenie połączenia
+//TODO: przeciążyć metodę Equals dla każdego listenera, żeby działała metoda removelistener
 namespace Server
 {
     public enum ServerStatus
@@ -31,7 +32,6 @@ namespace Server
 
         void AddServiceModule(string name, IServiceModule service) => services.Add(name, service);
 
-        //Dodawanie odpowiadacza
         void AddCommunicator(ICommunicator communicator)
         {
             lock(_lock)
@@ -41,7 +41,6 @@ namespace Server
             }
         }
 
-        //Dodawanie nasłuchiwacza
         void AddListener(IListener listener)
         {
             lock(_listenersLock)
@@ -49,7 +48,7 @@ namespace Server
                 listeners.Add(listener);
                 if (Status == ServerStatus.Running) listener.Start(new CommunicatorD(AddCommunicator));
             }
-            Console.WriteLine("Added listener!");
+            Console.WriteLine("[SRV] Added listener!");
         }
 
         void RemoveServiceModule(string name) => services.Remove(name);
@@ -59,7 +58,7 @@ namespace Server
             var cm = communicators.Find(x => x.Equals(communicator));
             cm.Stop();
             lock(_lock) { communicators.Remove(cm); }
-            Console.WriteLine("[SRV] Removed communicator");
+            Console.WriteLine("[SRV] Removed communicator!");
         }
 
         void RemoveListener(IListener listener) 
@@ -67,8 +66,10 @@ namespace Server
             lock(_listenersLock)
             {
                 var lr = listeners.Find(x => x.Equals(listener));
+                if (lr != null) lr.Stop();
                 listeners.Remove(lr);
             }
+            Console.WriteLine("[SRV] Removed listener!");
         }
 
         void Start()

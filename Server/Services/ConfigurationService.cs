@@ -5,7 +5,6 @@ using System.Text;
 namespace Server.Services
 {
     //TODO: Przetestować działanie tej usługi
-    //TODO: Wydaje mi się, że mam tutaj błędne indeksy w czytaniu informacji 
     class ConfigurationService : IServiceModule
     {
         public delegate void AddListenerD(IListener listener);
@@ -31,8 +30,8 @@ namespace Server.Services
             //Przykład 
             //conf addlistener nazwa protokol
 
-            string[] attributes = command.Split();
-            if(attributes.Length > 3)
+            string[] attributes = command.Trim().Split();
+            if(attributes.Length > 2)
             {
                 switch(attributes[1])
                 {
@@ -51,28 +50,28 @@ namespace Server.Services
         private string Help()
         {
             return "This is conf help\n" +
-                "conf addlistener name listenertype config" +
-                "conf addservice servicetype name [foldername]" +
-                "conf removelistener servicetype config" +
-                "conf removeservice servicetype name" +
-                "examples:" +
-                "conf addlistener tcp address port" +
-                "conf addlistener udp address port" +
-                "conf addlistener rs232 port [boundrate]" +
-                "conf addlistener netremoting tcpchannel" +
-                "conf addservice ftp name foldername" +
-                "conf removeservice name" +
-                "conf removelistener tcp address port";
+                "conf addlistener name listenertype config\n" +
+                "conf addservice servicetype name [foldername]\n" +
+                "conf removelistener servicetype config\n" +
+                "conf removeservice name\n" +
+                "examples:\n" +
+                "conf addlistener tcp address port\n" +
+                "conf addlistener udp address port\n" +
+                "conf addlistener rs232 port [boundrate]\n" +
+                "conf addlistener netremoting tcpchannel\n" +
+                "conf addservice ftp name foldername\n" +
+                "conf removeservice name\n" +
+                "conf removelistener tcplistener address port\n";
         }
 
         private string RemoveService(string[] command)
         {
-            if (command.Length > 3)
-            {
-                try { _removeServiceModule(command[3]); }
-                catch(Exception ex) { return ex.Message.ToString(); }
+            try 
+            { 
+                _removeServiceModule(command[2]);
+                return $"Successfull removed {command[2]} service!";
             }
-            return "Command is incorrect!" + Environment.NewLine; 
+            catch(Exception ex) { return ex.Message.ToString(); }
         }
 
         private string RemoveListener(string[] command)
@@ -81,7 +80,8 @@ namespace Server.Services
             for (int i = 3; i < command.Length; i++) sb.Append(command[i] + " ");
             try
             {
-                Type t = Type.GetType("Server." + command[2], false, true);
+                Type t = Type.GetType($"Server.{command[2]}", false, true);
+                if (t == null) return "Listener is incorrect!";
                 if (t.GetInterfaces().Contains(typeof(IListener)))
                 {
                     object ob = Activator.CreateInstance(t, sb.ToString());
@@ -93,27 +93,34 @@ namespace Server.Services
             return "Successfull removed listener!";
         }
 
+        //TODO: Do przetesowania usługa FTP
         private string AddService(string[] command)
         {
-            switch(command[3])
+            try
             {
-                case "ftp":
-                    try { _addService(command[4], new FTPService(command[5])); }
-                    catch(Exception ex) { return ex.Message; }
-                    return "Succesfull added service!" + Environment.NewLine;
-                case "chat":
-                    try { _addService(command[4], new ChatService()); }
-                    catch(Exception ex) { return ex.Message; }
-                    return "Succesfull added service!" + Environment.NewLine;
-                case "ping":
-                    try { _addService(command[4], new PingService()); }
-                    catch(Exception ex) { return ex.Message; }
-                    return "Succesfull added service!" + Environment.NewLine;
-                default: return "Service is incorrect!" + Environment.NewLine;
+                Type t = Type.GetType($"Server.Services.{command[2]}", false, true);
+                if (t == null) return "Service is incorrect!";
+                if(t.GetInterfaces().Contains(typeof(IServiceModule)))
+                {
+                    object ob;
+                    if (command.Length > 4)
+                    {
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 4; i < command.Length; i++) sb.Append($"{command[i]} ");
+                        ob = Activator.CreateInstance(t, sb.ToString().Trim());
+                    }
+                    else ob = Activator.CreateInstance(t);
+                    _addService(command[3], (IServiceModule)ob);
+                    return $"Succesfull added {command[3]} service!";
+                }
+                return "Service is incorrect!";
+            }
+            catch(Exception ex)
+            {
+                return ex.Message.ToString();
             }
         }
 
-        //TODO: Przetestowanie dodawania błędnych danych w stringu do _addListener
         private string AddListener(string[] command)
         {
             StringBuilder sb = new StringBuilder();
@@ -123,6 +130,7 @@ namespace Server.Services
             try
             {
                 Type t = Type.GetType("Server." + command[2], false, true);
+                if (t == null) return "Listener is incorrect!";
                 if (t.GetInterfaces().Contains(typeof(IListener)))
                 {
                     object ob = Activator.CreateInstance(t, sb.ToString());

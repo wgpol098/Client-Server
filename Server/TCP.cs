@@ -29,11 +29,18 @@ namespace Server
 
         private void HandleAcceptTcpClient(IAsyncResult result)
         {
-            TcpClient tcp = _listener.EndAcceptTcpClient(result);
-            _listener.BeginAcceptTcpClient(HandleAcceptTcpClient, _listener);
-            ICommunicator tmp = new TCPCommunicator(tcp);
-            _onConnect(tmp); 
-            Console.WriteLine("[TCP] Connected with: " + tcp.Client.RemoteEndPoint);
+            try
+            {
+                TcpClient tcp = _listener.EndAcceptTcpClient(result);
+                _listener.BeginAcceptTcpClient(HandleAcceptTcpClient, _listener);
+                ICommunicator tmp = new TCPCommunicator(tcp);
+                _onConnect(tmp);
+                Console.WriteLine("[TCP] Connected with: " + tcp.Client.RemoteEndPoint);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("[TCP] " + ex.Message.ToString());
+            }
         }
 
         public void Start(CommunicatorD onConnect)
@@ -45,6 +52,20 @@ namespace Server
         }
 
         public void Stop() => _listener.Stop();
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            TCPListener tmpListener = obj as TCPListener;
+            if (tmpListener == null) return false;
+            else return Equals(tmpListener);
+        }
+
+        public bool Equals(TCPListener other)
+        {
+            if (other == null) return false;
+            return other._ipEndPoint.Equals(_ipEndPoint);
+        }
     }
 
     class TCPCommunicator : ICommunicator
