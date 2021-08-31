@@ -1,22 +1,21 @@
 ﻿using System;
-using System.ComponentModel;
 using System.IO.Ports;
 
 namespace Server
 {
-    [Description("")]
+    //TODO: Przetestować usuwanie listenera
+    //TODO: Usuwanie listenera nic nie daje, bo nasłuchiwacz tego listenera nadal działa
     class RS232Listener : IListener
     {
         private SerialPort _serialPort;
 
         public RS232Listener(SerialPort serialPort) => _serialPort = serialPort;
 
-        //TODO: Tutaj można dodać jeszcze więcej opcji
         public RS232Listener(string config)
         {
             if(config != null)
             {
-                string[] tmp = config.Split();
+                string[] tmp = config.Trim().Split();
                 if(tmp.Length == 1) _serialPort = new SerialPort(tmp[0]);
                 else _serialPort = new SerialPort(tmp[0], int.Parse(tmp[1]));
             }
@@ -30,6 +29,20 @@ namespace Server
         public void Stop()
         {
             if(_serialPort != null) _serialPort.Close();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            RS232Listener tmpListener = obj as RS232Listener;
+            if (tmpListener == null) return false;
+            else return Equals(tmpListener);
+        }
+
+        public bool Equals(RS232Listener other)
+        {
+            if (other == null) return false;
+            return other._serialPort.Equals(_serialPort);
         }
     }
 

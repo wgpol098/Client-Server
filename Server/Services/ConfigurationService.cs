@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Server.Services
 {
-    //TODO: Przetestować działanie tej usługi
+    //TODO: Nie działa tylko usuwanie niektórych listenerów
     class ConfigurationService : IServiceModule
     {
         public delegate void AddListenerD(IListener listener);
@@ -93,7 +93,6 @@ namespace Server.Services
             return "Successfull removed listener!";
         }
 
-        //TODO: Do przetesowania usługa FTP
         private string AddService(string[] command)
         {
             try

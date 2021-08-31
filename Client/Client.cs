@@ -1,6 +1,5 @@
 ﻿using Common;
 using System;
-using System.IO;
 using System.IO.Ports;
 using System.Net;
 using System.Net.Sockets;
@@ -9,7 +8,6 @@ using System.Text;
 namespace Client
 {
     //TODO: Przesyłanie plików przez każdy protokół
-    //TODO: Wyświetlanie prawidłowych odpowiedzi z serwera dla każdego medium transmisyjnego
     class Client
     {
         static void Main(string[] args)
@@ -22,12 +20,11 @@ namespace Client
             bool exitFlag = false;
             while (!exitFlag)
             {
-                Console.WriteLine("Wybierz protokół komunikacji:");
+                Console.WriteLine("Select the communication protocol:");
                 Console.WriteLine("1. TCP");
                 Console.WriteLine("2. UDP");
                 Console.WriteLine("3. RS232");
-                Console.WriteLine("4. FTP");
-                Console.WriteLine("5. .Net remoting");
+                Console.WriteLine("4. .Net remoting");
                 Console.WriteLine("0. Exit");
 
                 int protocol;
@@ -74,8 +71,6 @@ namespace Client
             }
         }
 
-        //Wszystkie usługi są obsługiwane
-        //TODO: server list albo trzeba obsłużyć albo prerobić
         static void StartRS232()
         {
             try
@@ -93,7 +88,7 @@ namespace Client
                         sp.WriteLine(command);
                         response = sp.ReadLine();
                         if (command.Contains("ftp get ")) FTP.StringToFile(response, command.Split()[2]);
-                        else Console.WriteLine(command);
+                        else Console.WriteLine(response);
                         Console.WriteLine("CommandTime: " + watch.Elapsed);
                         Console.WriteLine("------------------");
                     }

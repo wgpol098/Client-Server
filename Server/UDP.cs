@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Server
 {
+    //TODO: Do przetestowania usuwanie listenera
     class UDPListener : IListener
     {
         private UdpClient _udpClient;
@@ -16,7 +17,7 @@ namespace Server
         {
             if(config != null)
             {
-                string[] tmp = config.Split();
+                string[] tmp = config.Trim().Split();
                 if (tmp.Length == 2) _ipEndPoint = new IPEndPoint(IPAddress.Parse(tmp[0]), int.Parse(tmp[1]));
             }
         }
@@ -28,6 +29,20 @@ namespace Server
         }
 
         public void Stop() => _udpClient.Close();
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            UDPListener tmpListener = obj as UDPListener;
+            if (tmpListener == null) return false;
+            else return Equals(tmpListener);
+        }
+
+        public bool Equals(UDPListener other)
+        {
+            if (other == null) return false;
+            return other._ipEndPoint.Equals(_ipEndPoint);
+        }
     }
 
     class UDPCommunicator : ICommunicator
@@ -47,14 +62,23 @@ namespace Server
 
         private void HandleConnection(IAsyncResult ar)
         {
-            byte[] receiveBytes = _client.EndReceive(ar, ref _ipEndPoint);
-            string receiveString = Encoding.ASCII.GetString(receiveBytes);
-            string receive = _onCommand(receiveString);
-            byte[] sendBytes = Encoding.ASCII.GetBytes(receive);
-            Console.WriteLine(receive);
-            _client.Send(sendBytes, sendBytes.Length, _ipEndPoint);
-            _client.BeginReceive(new AsyncCallback(HandleConnection), _client);
+            try
+            {
+                byte[] receiveBytes = _client.EndReceive(ar, ref _ipEndPoint);
+                string receiveString = Encoding.ASCII.GetString(receiveBytes);
+                string receive = _onCommand(receiveString);
+                byte[] sendBytes = Encoding.ASCII.GetBytes(receive);
+                Console.WriteLine(receive);
+                _client.Send(sendBytes, sendBytes.Length, _ipEndPoint);
+                _client.BeginReceive(new AsyncCallback(HandleConnection), _client);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message.ToString());
+                _onDisconnect(this);
+            }
         }
+
         public void Start(CommandD onCommand, CommunicatorD onDisconnect)
         {
             _onCommand = onCommand;

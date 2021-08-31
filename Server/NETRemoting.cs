@@ -6,6 +6,8 @@ using System.Runtime.Remoting.Channels.Tcp;
 
 namespace Server
 {
+    //TODO: Przetestować usuwanie listenera
+    //TODO: Zrobić porządne usuwanie listenera
     class NETRemotingListener : IListener
     {
         private TcpChannel _tcpChannel;
@@ -23,6 +25,20 @@ namespace Server
         }
 
         public void Stop() { return; }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            NETRemotingListener tmpListener = obj as NETRemotingListener;
+            if (tmpListener == null) return false;
+            else return Equals(tmpListener);
+        }
+
+        public bool Equals(NETRemotingListener other)
+        {
+            if (other == null) return false;
+            return other._tcpChannel.Equals(_tcpChannel);
+        }
     }
 
     class NETRemotingCommunicator : ICommunicator

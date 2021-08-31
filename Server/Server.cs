@@ -6,8 +6,7 @@ using System.Net;
 using System.Threading;
 
 
-//TODO: Usuwanie komunikatora, gdy nastąpi rozłączenie połączenia
-//TODO: przeciążyć metodę Equals dla każdego listenera, żeby działała metoda removelistener
+//TODO: Usuwanie komunikatora, gdy nastąpi rozłączenie połączenia przetestować dla każdego listenera
 namespace Server
 {
     public enum ServerStatus
@@ -94,7 +93,7 @@ namespace Server
             {
                 string serviceName = command.Split()[0];
                 if (services.ContainsKey(serviceName)) return services[serviceName].AnswerCommand(command);
-                return "Services is unavailable." + Environment.NewLine;
+                return "Services is unavailable.";
             }
             return "Command was null!";
         }

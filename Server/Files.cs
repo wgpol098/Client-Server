@@ -3,6 +3,8 @@ using System.IO;
 
 namespace Server
 {
+    //TODO: Przetestowanie usuwania listenera
+    //TODO: Usuwanie listenera nie działa prawidłowo
     class FilesListener : IListener
     {
         private string _folderName;
@@ -34,6 +36,20 @@ namespace Server
         }
 
         public void Stop() => watcher.Dispose();
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            FilesListener tmpListener = obj as FilesListener;
+            if (tmpListener == null) return false;
+            else return Equals(tmpListener);
+        }
+
+        public bool Equals(FilesListener other)
+        {
+            if (other == null) return false;
+            return other._folderName.Equals(_folderName);
+        }
     }
 
     class FilesCommunicator : ICommunicator
