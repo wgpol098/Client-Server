@@ -3,7 +3,6 @@ using System.IO;
 
 namespace Server
 {
-    //TODO: To może być obsługiwane za pomocą usługi FTP. Można wysyłać i odbierać dane
     class FilesListener : IListener
     {
         private string _folderName;
@@ -14,7 +13,7 @@ namespace Server
         {
             _folderName = folderpath;
             if(!Directory.Exists(_folderName)) Directory.CreateDirectory(_folderName);
-            watcher = new FileSystemWatcher(folderpath);
+            watcher = new FileSystemWatcher(_folderName);
         }
         public void Start(CommunicatorD onConnect)
         {
@@ -22,25 +21,19 @@ namespace Server
             Console.WriteLine("[Files Listener] - START!");
             string[] fileList = Directory.GetFiles(_folderName);
 
-            for(int i = 0; i < fileList.Length; i++) Console.WriteLine(fileList[i]);
-
             watcher.NotifyFilter = NotifyFilters.LastWrite;
             watcher.Changed += OnChanged;
             watcher.Filter = "*.txt";
             watcher.EnableRaisingEvents = true;
         }
 
-        //Kiedy plik się zmienia, bądź zostaje utworzony
         private void OnChanged(object sender, FileSystemEventArgs e)
         {
             Console.WriteLine($"[Files Listener] Changed: {e.FullPath}");
             if (e.ChangeType == WatcherChangeTypes.Changed) _onConnect(new FilesCommunicator(e.FullPath));
         }
 
-        public void Stop()
-        {
-            watcher.Dispose();
-        }
+        public void Stop() => watcher.Dispose();
     }
 
     class FilesCommunicator : ICommunicator
@@ -50,24 +43,19 @@ namespace Server
         public FilesCommunicator(string fileName) => _fileName = fileName;
         public void Start(CommandD onCommand, CommunicatorD onDisconnect)
         {
-            //Czytanie pliku linia po linii i przetwarzanie komend i tworzenie nowego pliku
-
+            string _oldFileName = _fileName;
             using (var sr = new StreamReader(_fileName))
             {
                 using (var sw = new StreamWriter(_fileName.Replace(".txt",".odp")))
                 {
-                    while (!sr.EndOfStream)
-                    {
-                        Console.Write(onCommand(sr.ReadLine()));
-                        sw.Write(onCommand(sr.ReadLine()));
-                    }
+                    while (!sr.EndOfStream) sw.WriteLine(onCommand(sr.ReadLine()));
                 }
             }
+
+            if (!Directory.Exists("archive")) Directory.CreateDirectory("archive");
+            File.Move(_oldFileName, $"archive\\ {DateTime.Now.ToFileTime()}_{Path.GetFileName(_oldFileName)}");
         }
 
-        public void Stop()
-        {
-            Console.WriteLine("[Files] - STOP!");
-        }
+        public void Stop() => Console.WriteLine("[Files] - STOP!");
     }
 }

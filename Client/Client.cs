@@ -41,9 +41,7 @@ namespace Client
                         break;
                     case 3: StartRS232();
                         break;
-                    case 4: StartFTP();
-                        break;
-                    case 5: StartNetRemoting();
+                    case 4: StartNetRemoting();
                         break;
                     case 0: exitFlag = true;
                         break;
@@ -73,36 +71,6 @@ namespace Client
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message.ToString());
-            }
-        }
-
-        //TODO: Do zrobienia 
-        static void StartFTP()
-        {
-            try
-            {
-                FtpWebRequest request = (FtpWebRequest)WebRequest.Create("ftp://hostname.com/");
-                request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-
-                request.Credentials = new NetworkCredential("maruthi", "******");
-                request.KeepAlive = false;
-                request.UseBinary = true;
-                request.UsePassive = true;
-
-                FtpWebResponse response = (FtpWebResponse)request.GetResponse();
-
-                Stream stream = response.GetResponseStream();
-                StreamReader reader = new StreamReader(stream);
-
-                Console.WriteLine(reader.ReadToEnd());
-                Console.WriteLine("Directory List Complete status {0}", response.StatusDescription);
-
-                reader.Close();
-                response.Close();
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.Message.ToString());
             }
         }
 

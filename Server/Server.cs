@@ -128,7 +128,7 @@ namespace Server
             srv.AddListener(new TCPListener(new IPEndPoint(IPAddress.Any, 12345)));
             srv.AddListener(new UDPListener(new IPEndPoint(IPAddress.Any, 12346)));
             srv.AddListener(new RS232Listener(new SerialPort("COM2", 9600, Parity.None, 8, StopBits.One)));
-            srv.AddListener(new FilesListener("FTasdasdP"));
+            srv.AddListener(new FilesListener("FilesListener"));
             //Wystarczy podać port
             srv.AddListener(new NETRemotingListener("65432"));
             //srv.AddListener(new FTPListener());
