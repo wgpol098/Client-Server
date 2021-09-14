@@ -5,7 +5,6 @@ using System.Text;
 
 namespace Server
 {
-    //TODO: Do przetestowania usuwanie listenera
     class UDPListener : IListener
     {
         private UdpClient _udpClient;

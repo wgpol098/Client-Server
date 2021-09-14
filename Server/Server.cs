@@ -5,8 +5,6 @@ using System.IO.Ports;
 using System.Net;
 using System.Threading;
 
-
-//TODO: Usuwanie komunikatora, gdy nastąpi rozłączenie połączenia przetestować dla każdego listenera
 namespace Server
 {
     public enum ServerStatus
@@ -73,7 +71,6 @@ namespace Server
 
         void Start()
         {
-            //Zawsze dodaje usługę konfiguracji.
             AddServiceModule("conf", new ConfigurationService
                 (
                     new ConfigurationService.AddListenerD(AddListener), 
@@ -86,7 +83,6 @@ namespace Server
             Status = ServerStatus.Running;
         }
 
-        //Metoda odpowiedzialna za odpowiadanie 
         private string Answer(string command)
         {
             if( command != null)
@@ -117,20 +113,16 @@ namespace Server
         static void Main()
         {
             var srv = new Server();
-            //dodanie usług serwera
             srv.AddServiceModule("ping", new PingService());
             srv.AddServiceModule("chat", new ChatService());
             srv.AddServiceModule("ftp", new FTPService("FTP"));
             
             srv.Start();
-            //dodaje i włącza nasłuchiwacza
             srv.AddListener(new TCPListener(new IPEndPoint(IPAddress.Any, 12345)));
             srv.AddListener(new UDPListener(new IPEndPoint(IPAddress.Any, 12346)));
             srv.AddListener(new RS232Listener(new SerialPort("COM2", 9600, Parity.None, 8, StopBits.One)));
             srv.AddListener(new FilesListener("FilesListener"));
-            //Wystarczy podać port
             srv.AddListener(new NETRemotingListener("65432"));
-            //srv.AddListener(new FTPListener());
             srv.WaitForStop();
             srv.Stop();
         }

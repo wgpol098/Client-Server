@@ -96,26 +96,30 @@ namespace Server
             string data = string.Empty;
             while (_client.Connected)
             {
-                if (networkStream.DataAvailable)
+                try
                 {
-                    int len = networkStream.Read(bytes, 0, bytes.Length);
-                    data += Encoding.ASCII.GetString(bytes, 0, len);
+                    if (networkStream.DataAvailable)
+                    {
+                        int len = networkStream.Read(bytes, 0, bytes.Length);
+                        data += Encoding.ASCII.GetString(bytes, 0, len);
+                    }
+                    else if (data != string.Empty)
+                    {
+                        string message = _onCommand(data);
+                        bytes = Encoding.ASCII.GetBytes(message);
+                        networkStream.Write(bytes, 0, bytes.Length);
+                        Console.WriteLine("[TCP] Send: {0}", message);
+                        data = string.Empty;
+                    }
+                    if (_client.Client.Poll(0, SelectMode.SelectRead))
+                    {
+
+                        if (_client.Client.Receive(new byte[1], SocketFlags.Peek) == 0) _onDisconnect(this);
+                    }
                 }
-                else if (data != string.Empty)
-                {
-                    string message = _onCommand(data);
-                    bytes = Encoding.ASCII.GetBytes(message);
-                    networkStream.Write(bytes, 0, bytes.Length);
-                    Console.WriteLine("[TCP] Send: {0}", message);
-                    data = string.Empty;
-                }
-                if(_client.Client.Poll(0, SelectMode.SelectRead))
-                {
-                    if (_client.Client.Receive(new byte[1], SocketFlags.Peek) == 0) _onDisconnect(this);
-                }
+                catch{ _onDisconnect(this); }
             }
             networkStream.Close();
-            Stop();
         }
 
         public void Stop()

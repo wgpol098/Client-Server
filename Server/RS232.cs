@@ -3,8 +3,6 @@ using System.IO.Ports;
 
 namespace Server
 {
-    //TODO: Przetestować usuwanie listenera
-    //TODO: Usuwanie listenera nic nie daje, bo nasłuchiwacz tego listenera nadal działa
     class RS232Listener : IListener
     {
         private SerialPort _serialPort;
@@ -42,7 +40,9 @@ namespace Server
         public bool Equals(RS232Listener other)
         {
             if (other == null) return false;
-            return other._serialPort.Equals(_serialPort);
+            if (!other._serialPort.PortName.Equals(_serialPort.PortName)) return false;
+            if (!other._serialPort.BaudRate.Equals(_serialPort.BaudRate)) return false;
+            return true;
         }
     }
 

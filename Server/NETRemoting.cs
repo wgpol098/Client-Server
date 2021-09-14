@@ -6,16 +6,23 @@ using System.Runtime.Remoting.Channels.Tcp;
 
 namespace Server
 {
-    //TODO: Przetestować usuwanie listenera
-    //TODO: Zrobić porządne usuwanie listenera
     class NETRemotingListener : IListener
     {
         private TcpChannel _tcpChannel;
+        private int _tcpChannelInt;
 
         public NETRemotingListener(TcpChannel tcpChannel) => _tcpChannel = tcpChannel;
         public NETRemotingListener(string port)
         {
-            _tcpChannel = new TcpChannel(int.Parse(port));
+            try
+            {
+                _tcpChannel = new TcpChannel(int.Parse(port));
+                _tcpChannelInt = int.Parse(port);
+            }
+            catch
+            {
+                _tcpChannelInt = int.Parse(port);
+            }
         }
 
         public void Start(CommunicatorD onConnect)
@@ -24,20 +31,19 @@ namespace Server
             Console.WriteLine("[.net remoting] Waiting for clients!");
         }
 
-        public void Stop() { return; }
+        public void Stop() { ChannelServices.UnregisterChannel(_tcpChannel); }
 
         public override bool Equals(object obj)
         {
             if (obj == null) return false;
-            NETRemotingListener tmpListener = obj as NETRemotingListener;
-            if (tmpListener == null) return false;
+            if (!(obj is NETRemotingListener tmpListener)) return false;
             else return Equals(tmpListener);
         }
 
         public bool Equals(NETRemotingListener other)
         {
             if (other == null) return false;
-            return other._tcpChannel.Equals(_tcpChannel);
+            return other._tcpChannelInt.Equals(_tcpChannelInt);
         }
     }
 

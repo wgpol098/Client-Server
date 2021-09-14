@@ -7,10 +7,9 @@ using System.Text;
 
 namespace Client
 {
-    //TODO: Przesyłanie plików przez każdy protokół
     class Client
     {
-        static void Main(string[] args)
+        static void Main()
         {
             Start();
         }
@@ -83,10 +82,14 @@ namespace Client
                     while (true)
                     {
                         command = GetCommand();
+                        response = string.Empty;
                         if (command.Equals("logout")) break;
                         var watch = System.Diagnostics.Stopwatch.StartNew();
                         sp.WriteLine(command);
-                        response = sp.ReadLine();
+                        while(response.Equals(string.Empty))
+                        {
+                            response = sp.ReadExisting();
+                        }
                         if (command.Contains("ftp get ")) FTP.StringToFile(response, command.Split()[2]);
                         else Console.WriteLine(response);
                         Console.WriteLine("CommandTime: " + watch.Elapsed);
@@ -101,7 +104,6 @@ namespace Client
         }
 
         //Wysyłanie danych przez UDP
-        //TODO: Trzeba ogarnąć bufor wysyłania i odbierania plików w tym protokole
         static void StartUDP()
         {
             string server = "127.0.0.1";
@@ -132,7 +134,7 @@ namespace Client
                 }
                 client.Close();
             }
-            catch(Exception e) { Console.WriteLine(e.ToString()); }
+            catch(Exception e) { Console.WriteLine(e.Message.ToString()); }
         }
 
         static string GetCommand()
@@ -144,7 +146,6 @@ namespace Client
         static string CreateCommand(string command)
         {
             if (command.Contains(" send ")) return command + " " + FTP.FileToString(command.Split()[2]);
-            //TODO: To rodzi problemy jak chce stworzyć usługę ping
             if (command.Contains("ping ")) return Ping.Query(int.Parse(command.Split()[1]), int.Parse(command.Split()[2]));
             return command;
         }

@@ -4,7 +4,6 @@ using System.Text;
 
 namespace Server.Services
 {
-    //TODO: Nie działa tylko usuwanie niektórych listenerów
     class ConfigurationService : IServiceModule
     {
         public delegate void AddListenerD(IListener listener);
@@ -31,7 +30,7 @@ namespace Server.Services
             //conf addlistener nazwa protokol
 
             string[] attributes = command.Trim().Split();
-            if(attributes.Length > 2)
+            if(attributes.Length > 1)
             {
                 switch(attributes[1])
                 {
@@ -46,7 +45,6 @@ namespace Server.Services
             return "Command is incorrect!" + Environment.NewLine;
         }
 
-        //TODO: Do uzupełnienia
         private string Help()
         {
             return "This is conf help\n" +
@@ -55,13 +53,13 @@ namespace Server.Services
                 "conf removelistener servicetype config\n" +
                 "conf removeservice name\n" +
                 "examples:\n" +
-                "conf addlistener tcp address port\n" +
-                "conf addlistener udp address port\n" +
-                "conf addlistener rs232 port [boundrate]\n" +
-                "conf addlistener netremoting tcpchannel\n" +
+                "conf addlistener tcplistener address port\n" +
+                "conf addlistener udplistener address port\n" +
+                "conf addlistener rs232listener port [boundrate]\n" +
+                "conf addlistener netremotinglistener tcpchannel\n" +
                 "conf addservice ftp name foldername\n" +
                 "conf removeservice name\n" +
-                "conf removelistener tcplistener address port\n";
+                "conf removelistener tcplistener address port";
         }
 
         private string RemoveService(string[] command)
@@ -84,7 +82,7 @@ namespace Server.Services
                 if (t == null) return "Listener is incorrect!";
                 if (t.GetInterfaces().Contains(typeof(IListener)))
                 {
-                    object ob = Activator.CreateInstance(t, sb.ToString());
+                    object ob = Activator.CreateInstance(t, sb.ToString().Trim());
                     _removeListener((IListener)ob);
                 }
                 else return "Listener is incorrect!";
